@@ -1,10 +1,8 @@
 mod storage;
 mod address;
 mod names;
-mod update;
-mod mybincode;
-mod jwt;
 mod handlers;
+mod utils;
 
 use warp::{Filter, path, path::param};
 

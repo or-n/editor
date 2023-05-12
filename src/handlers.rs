@@ -1,9 +1,8 @@
 use crate::address::Address;
-use crate::storage;
-use crate::jwt;
-use crate::names;
-use crate::update;
 use crate::address;
+use crate::storage;
+use crate::names;
+use crate::utils::{jwt, update};
 
 use warp::reply;
 use std::path::{Path, PathBuf};
@@ -62,7 +61,7 @@ pub fn create_node(path: PathBuf, inputs: Addresses) -> Vec<u8> {
 pub fn update_node_names(path: PathBuf, node: Address, name: String) -> Vec<u8> {
     let path = &storage::node_names(&path, &node);
     let update = update::string_empty_option(names::toggle(&name));
-    storage::update::optional_file(path, update).unwrap();
+    update::optional_file(path, update).unwrap();
     vec![]
 }
 
