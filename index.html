@@ -1,0 +1,19 @@
+<html>
+<head>
+  <meta charset="UTF-8">
+  <script src="/elm.js"></script>
+  <link rel="stylesheet" type="text/css" href="styles/global.css"/>
+</head>
+
+<body>
+  <script>
+  var app = Elm.Main.init({
+    node: document.getElementById('myapp'),
+    flags:
+    	{ width: window.innerWidth
+    	, height: window.innerHeight
+    	}
+  });
+  </script>
+</body>
+</html>
