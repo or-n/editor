@@ -1,8 +1,10 @@
 mod digit_text;
 mod term;
+mod term_text;
 mod text;
 
 use term::*;
+use term_text::*;
 use text::*;
 
 use std::collections::HashMap;
@@ -17,20 +19,13 @@ fn example() -> BTerm {
     let0("c".to_string(), apply_add_pair, use_c)
 }
 
-fn crab() -> Result<(), ()> {
-    let s = "🦀hello";
-    let r = s;
-    let s = "🦀h".drop(s)?;
-    let s = "ell".drop(s)?;
-    println!("{r} vs {s}");
-    Ok(())
-}
-
 fn main() {
-    crab();
-
     let result = example().run(&mut HashMap::new());
     println!("{:?}", result);
 
+    let settings = Settings {};
+
     let blep_source = include_str!("examples/blep");
+    let blep = BTerm::eat(blep_source, settings);
+    println!("{:?}", blep);
 }
