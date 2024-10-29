@@ -1,5 +1,6 @@
 pub mod apply;
 pub mod integer;
+pub mod name;
 pub mod pair;
 
 use crate::term::*;
@@ -39,6 +40,9 @@ impl<'a> Eat<'a, TermError, Settings> for BTerm {
         }
         if let Ok((text, term)) = Integer::eat(text, ()) {
             return Ok((text, integer(term)));
+        }
+        if let Ok((text, term)) = name::Term::eat(text, ()) {
+            return Ok((text, parameter(term.0)));
         }
         Err(TermError::Invalid)
     }
