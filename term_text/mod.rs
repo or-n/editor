@@ -1,3 +1,4 @@
+pub mod apply;
 pub mod integer;
 pub mod pair;
 
@@ -5,7 +6,9 @@ use crate::term::*;
 use crate::text::*;
 
 #[derive(Debug, Clone, Copy)]
-pub struct Settings {}
+pub struct Settings {
+    pub apply: bool,
+}
 
 #[derive(Debug)]
 pub enum TermError {
@@ -14,6 +17,17 @@ pub enum TermError {
 
 impl<'a> Eat<'a, TermError, Settings> for BTerm {
     fn eat(text: &'a str, data: Settings) -> Result<(&'a str, Self), TermError> {
+        if data.apply {
+            if let Ok((text, term)) = apply::Term::eat(
+                text,
+                Settings {
+                    apply: false,
+                    ..data
+                },
+            ) {
+                return Ok((text, term.0));
+            }
+        }
         if let Ok((text, term)) = pair::Term::eat(text, data) {
             return Ok((text, term.0));
         }
