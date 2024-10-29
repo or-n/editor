@@ -16,7 +16,7 @@ fn example() -> BTerm {
     let add = integer(add());
     let apply_add_pair = apply(add, pair);
     let use_c = parameter("c".to_string());
-    let0("c".to_string(), apply_add_pair, use_c)
+    r#let("c".to_string(), apply_add_pair, use_c)
 }
 
 fn main() {

@@ -20,7 +20,7 @@ pub enum Integer {
     Mul,
 }
 
-pub fn let0(name: Name, a: BTerm, b: BTerm) -> BTerm {
+pub fn r#let(name: Name, a: BTerm, b: BTerm) -> BTerm {
     Box::new(Term::Let(name, a, b))
 }
 

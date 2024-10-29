@@ -1,5 +1,6 @@
 pub mod apply;
 pub mod integer;
+pub mod r#let;
 pub mod name;
 pub mod pair;
 
@@ -24,6 +25,9 @@ pub enum TermError {
 
 impl Eat<TermError, Settings> for BTerm {
     fn eat(text: &str, data: Settings) -> Result<(&str, Self), TermError> {
+        if let Ok((text, term)) = r#let::Term::eat(text, ()) {
+            return Ok((text, term.0));
+        }
         if data.apply {
             if let Ok((text, term)) = apply::Term::eat(
                 text,
