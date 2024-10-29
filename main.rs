@@ -9,21 +9,10 @@ use text::*;
 
 use std::collections::HashMap;
 
-fn example() -> BTerm {
-    let a = integer(i(21));
-    let b = integer(i(37));
-    let pair = pair(a, b);
-    let add = integer(add());
-    let apply_add_pair = apply(add, pair);
-    let use_c = parameter("c".to_string());
-    r#let("c".to_string(), apply_add_pair, use_c)
-}
-
 fn main() {
-    let result = example().run(&mut HashMap::new());
-    println!("{:?}", result);
-
-    let blep_source = include_str!("examples/blep");
-    let blep = BTerm::eat(blep_source, Settings::default());
-    println!("{:?}", blep);
+    let source = include_str!("examples/blep");
+    let (_, term) = BTerm::eat(source, Settings::default()).unwrap();
+    let mut context = HashMap::new();
+    context.insert("x".to_string(), integer(i(1)));
+    println!("{:?}", term.run(&mut context));
 }
