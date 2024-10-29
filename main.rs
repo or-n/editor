@@ -1,12 +1,9 @@
 mod digit_text;
 mod term;
-mod term_text;
 mod text;
 
 use term::*;
 use text::*;
-
-use term_text::settings::*;
 
 use std::collections::HashMap;
 
@@ -31,17 +28,9 @@ fn crab() -> Result<(), ()> {
 
 fn main() {
     crab();
-    let index = Index::new();
-
-    let input = "2137";
-    let n = Value::<isize>::try_from(index.value(input)).expect("n");
-    println!("{:?}", n.value);
 
     let result = example().run(&mut HashMap::new());
     println!("{:?}", result);
 
     let blep_source = include_str!("examples/blep");
-    let settings = Settings { apply: true };
-    let blep = Value::<BTerm>::try_from(index.value((blep_source, settings))).expect("blep");
-    println!("{:?}", blep.value);
 }
