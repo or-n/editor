@@ -14,13 +14,13 @@ pub enum Error {
 
 pub struct Term(pub BTerm);
 
-impl<'a> Eat<'a, Error, Settings> for Term {
-    fn eat(text: &'a str, data: Settings) -> Result<(&'a str, Self), Error> {
+impl<'a> Eat<'a, Error, ()> for Term {
+    fn eat(text: &'a str, _data: ()) -> Result<(&'a str, Self), Error> {
         use Error::*;
         let text = '('.drop(text).map_err(|_| L)?;
-        let (text, a) = BTerm::eat(text, data).map_err(A)?;
+        let (text, a) = BTerm::eat(text, Settings::default()).map_err(A)?;
         let text = ", ".drop(text).map_err(|_| Sep)?;
-        let (text, b) = BTerm::eat(text, data).map_err(B)?;
+        let (text, b) = BTerm::eat(text, Settings::default()).map_err(B)?;
         let text = ')'.drop(text).map_err(|_| R)?;
         Ok((text, Term(pair(a, b))))
     }

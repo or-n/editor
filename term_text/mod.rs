@@ -10,6 +10,12 @@ pub struct Settings {
     pub apply: bool,
 }
 
+impl Default for Settings {
+    fn default() -> Self {
+        Self { apply: true }
+    }
+}
+
 #[derive(Debug)]
 pub enum TermError {
     Invalid,
@@ -28,7 +34,7 @@ impl<'a> Eat<'a, TermError, Settings> for BTerm {
                 return Ok((text, term.0));
             }
         }
-        if let Ok((text, term)) = pair::Term::eat(text, data) {
+        if let Ok((text, term)) = pair::Term::eat(text, ()) {
             return Ok((text, term.0));
         }
         if let Ok((text, term)) = Integer::eat(text, ()) {

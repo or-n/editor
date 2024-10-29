@@ -23,9 +23,7 @@ fn main() {
     let result = example().run(&mut HashMap::new());
     println!("{:?}", result);
 
-    let settings = Settings { apply: true };
-
     let blep_source = include_str!("examples/blep");
-    let blep = BTerm::eat(blep_source, settings);
+    let blep = BTerm::eat(blep_source, Settings::default());
     println!("{:?}", blep);
 }
