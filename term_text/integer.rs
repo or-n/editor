@@ -6,8 +6,8 @@ pub enum Error {
     Invalid,
 }
 
-impl<'a> Eat<'a, Error, ()> for Integer {
-    fn eat(text: &'a str, _data: ()) -> Result<(&'a str, Self), Error> {
+impl Eat<Error, ()> for Integer {
+    fn eat(text: &str, _data: ()) -> Result<(&str, Self), Error> {
         if let Ok((text, n)) = isize::eat(text, ()) {
             return Ok((text, i(n)));
         }

@@ -12,12 +12,12 @@ pub enum Error {
 
 pub struct Term(pub BTerm);
 
-impl<'a> Eat<'a, Error, Settings> for Term {
-    fn eat(text: &'a str, data: Settings) -> Result<(&'a str, Self), Error> {
+impl Eat<Error, Settings> for Term {
+    fn eat(text: &str, data: Settings) -> Result<(&str, Self), Error> {
         use Error::*;
         let (text, a) = BTerm::eat(text, data).map_err(A)?;
         let text = ' '.drop(text).map_err(|_| Sep)?;
         let (text, b) = BTerm::eat(text, data).map_err(B)?;
-        Ok((text, Term(apply(a, b))))
+        Ok((text, Self(apply(a, b))))
     }
 }

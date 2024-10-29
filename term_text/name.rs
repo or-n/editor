@@ -8,8 +8,8 @@ pub enum NameCharError {
 
 pub struct NameChar(pub char);
 
-impl<'a> Eat<'a, NameCharError, ()> for NameChar {
-    fn eat(text: &'a str, _data: ()) -> Result<(&'a str, Self), NameCharError> {
+impl Eat<NameCharError, ()> for NameChar {
+    fn eat(text: &str, _data: ()) -> Result<(&str, Self), NameCharError> {
         use NameCharError::*;
         let (text, c) = char::eat(text, ()).map_err(|_| Missing)?;
         if !(c.is_alphanumeric() || c == '_') {
@@ -27,8 +27,8 @@ pub enum Error {
 
 pub struct Term(pub String);
 
-impl<'a> Eat<'a, Error, ()> for Term {
-    fn eat(text: &'a str, _data: ()) -> Result<(&'a str, Self), Error> {
+impl Eat<Error, ()> for Term {
+    fn eat(text: &str, _data: ()) -> Result<(&str, Self), Error> {
         use Error::*;
         let (text, c) = char::eat(text, ()).map_err(|_| FirstMissing)?;
         if !c.is_alphabetic() {

@@ -5,26 +5,26 @@ pub enum CharError {
     Mismatch { expected: char, got: char },
 }
 
-pub trait Eat<'a, Error, Data>
+pub trait Eat<Error, Data>
 where
     Self: Sized,
 {
-    fn eat(text: &'a str, data: Data) -> Result<(&'a str, Self), Error>;
+    fn eat(text: &str, data: Data) -> Result<(&str, Self), Error>;
 }
 
-pub trait EatMany<'a, Error, Data>
+pub trait EatMany<Error, Data>
 where
     Self: Sized,
 {
-    fn eat_many(text: &'a str, data: Data) -> (&'a str, Vec<Self>);
+    fn eat_many(text: &str, data: Data) -> (&str, Vec<Self>);
 }
 
-impl<'a, Error, Data, T> EatMany<'a, Error, Data> for T
+impl<Error, Data, T> EatMany<Error, Data> for T
 where
-    T: Eat<'a, Error, Data>,
+    T: Eat<Error, Data>,
     Data: Copy,
 {
-    fn eat_many(mut text: &'a str, data: Data) -> (&'a str, Vec<T>) {
+    fn eat_many(mut text: &str, data: Data) -> (&str, Vec<T>) {
         let mut results = vec![];
         while let Ok((new_text, item)) = T::eat(text, data) {
             text = new_text;
@@ -34,21 +34,21 @@ where
     }
 }
 
-pub trait Drop<'a, Error>
+pub trait Drop<Error>
 where
     Self: Sized,
 {
-    fn drop(self, text: &'a str) -> Result<&'a str, Error>;
+    fn drop(self, text: &str) -> Result<&str, Error>;
 }
 
-impl<'a> Eat<'a, (), ()> for char {
+impl Eat<(), ()> for char {
     fn eat(s: &str, _data: ()) -> Result<(&str, char), ()> {
         let c = s.chars().next().ok_or(())?;
         Ok((&s[c.len_utf8()..], c))
     }
 }
 
-impl<'a> Drop<'a, ()> for char {
+impl Drop<()> for char {
     fn drop(self, s: &str) -> Result<&str, ()> {
         let c = s.chars().next().ok_or(())?;
         if c != self {
@@ -58,8 +58,8 @@ impl<'a> Drop<'a, ()> for char {
     }
 }
 
-impl<'a, 'b> Drop<'a, ()> for &'b str {
-    fn drop(self, mut s: &'a str) -> Result<&'a str, ()> {
+impl<'b> Drop<()> for &'b str {
+    fn drop(self, mut s: &str) -> Result<&str, ()> {
         for c in self.chars() {
             s = c.drop(s)?;
         }

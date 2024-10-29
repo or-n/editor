@@ -2,16 +2,16 @@ use crate::text::*;
 
 pub struct Digit(u32);
 
-impl<'a> Eat<'a, (), ()> for Digit {
-    fn eat(text: &'a str, _data: ()) -> Result<(&'a str, Self), ()> {
+impl Eat<(), ()> for Digit {
+    fn eat(text: &str, _data: ()) -> Result<(&str, Self), ()> {
         let (text, c) = char::eat(text, ())?;
         let digit = c.to_digit(10).ok_or(())?;
         Ok((text, Digit(digit)))
     }
 }
 
-impl<'a> Eat<'a, (), ()> for isize {
-    fn eat(text: &'a str, _data: ()) -> Result<(&'a str, Self), ()> {
+impl Eat<(), ()> for isize {
+    fn eat(text: &str, _data: ()) -> Result<(&str, Self), ()> {
         let (text, digits) = Digit::eat_many(text, ());
         if digits.is_empty() {
             return Err(());

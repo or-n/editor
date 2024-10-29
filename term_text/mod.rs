@@ -22,8 +22,8 @@ pub enum TermError {
     Invalid,
 }
 
-impl<'a> Eat<'a, TermError, Settings> for BTerm {
-    fn eat(text: &'a str, data: Settings) -> Result<(&'a str, Self), TermError> {
+impl Eat<TermError, Settings> for BTerm {
+    fn eat(text: &str, data: Settings) -> Result<(&str, Self), TermError> {
         if data.apply {
             if let Ok((text, term)) = apply::Term::eat(
                 text,
