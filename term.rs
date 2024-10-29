@@ -54,52 +54,45 @@ pub fn mul() -> Integer {
 
 impl Term {
     pub fn run(&self, context: &mut HashMap<Name, BTerm>) -> BTerm {
+        use self::Integer::*;
+        use Term::*;
         match self {
-            Term::Let(name, a, b) => {
+            Let(name, a, b) => {
                 let a_value = a.run(context);
                 context.insert(name.clone(), a_value);
                 b.run(context)
             }
-            Term::Parameter(name) => context
+            Parameter(name) => context
                 .get(name)
                 .unwrap_or(&parameter(name.clone()))
                 .clone(),
-            Term::Integer(i) => i.run(context),
-            Term::Pair(a, b) => pair(a.clone(), b.clone()),
-            Term::Apply(a, b) => match *a.run(context) {
-                Term::Integer(Integer::Add) => match *b.run(context) {
-                    Term::Pair(a, b) => match (*a.run(context), *b.run(context)) {
-                        (Term::Integer(Integer::I(a)), Term::Integer(Integer::I(b))) => {
-                            integer(i(a + b))
-                        }
+            Integer(i) => integer(i.clone()),
+            Pair(a, b) => pair(a.clone(), b.clone()),
+            Apply(a, b) => match *a.run(context) {
+                Integer(Add) => match *b.run(context) {
+                    Pair(a, b) => match (*a.run(context), *b.run(context)) {
+                        (Integer(I(a)), Integer(I(b))) => integer(i(a + b)),
                         (a_value, b_value) => {
-                            apply(integer(add()), pair(Box::new(a_value), Box::new(b_value)))
+                            let a = Box::new(a_value);
+                            let b = Box::new(b_value);
+                            apply(integer(add()), pair(a, b))
                         }
                     },
                     other => apply(integer(add()), Box::new(other)),
                 },
-                Term::Integer(Integer::Mul) => match *b.run(context) {
-                    Term::Pair(a, b) => match (*a.run(context), *b.run(context)) {
-                        (Term::Integer(Integer::I(a)), Term::Integer(Integer::I(b))) => {
-                            integer(i(a * b))
-                        }
+                Integer(Mul) => match *b.run(context) {
+                    Pair(a, b) => match (*a.run(context), *b.run(context)) {
+                        (Integer(I(a)), Integer(I(b))) => integer(i(a * b)),
                         (a_value, b_value) => {
-                            apply(integer(mul()), pair(Box::new(a_value), Box::new(b_value)))
+                            let a = Box::new(a_value);
+                            let b = Box::new(b_value);
+                            apply(integer(mul()), pair(a, b))
                         }
                     },
                     other => apply(integer(mul()), Box::new(other)),
                 },
                 other => apply(Box::new(other), b.clone()),
             },
-        }
-    }
-}
-
-impl Integer {
-    pub fn run(&self, _context: &mut HashMap<Name, BTerm>) -> BTerm {
-        match self {
-            Integer::I(value) => integer(i(*value)),
-            _ => integer(self.clone()),
         }
     }
 }
