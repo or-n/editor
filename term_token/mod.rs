@@ -1,5 +1,7 @@
 pub mod apply;
 pub mod integer;
+pub mod r#let;
+pub mod name;
 pub mod pair;
 
 use crate::term::*;
@@ -13,6 +15,9 @@ pub enum Error {
 
 impl Eat<Token, Error, Settings> for BTerm {
     fn eat(i: &[Token], data: Settings) -> Result<(&[Token], Self), Error> {
+        if let Ok((i, term)) = r#let::Term::eat(i, ()) {
+            return Ok((i, term.0));
+        }
         if data.apply {
             if let Ok((i, term)) = apply::Term::eat(
                 i,

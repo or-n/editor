@@ -1,7 +1,7 @@
 use super::name;
 use crate::text::*;
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub enum Token {
     Special(char),
     Whitespace(char, usize),

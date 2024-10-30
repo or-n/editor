@@ -67,7 +67,11 @@ impl Term {
                 .unwrap_or(&parameter(name.clone()))
                 .clone(),
             Integer(i) => integer(i.clone()),
-            Pair(a, b) => pair(a.clone(), b.clone()),
+            Pair(a, b) => {
+                let a = Box::new(*a.run(context));
+                let b = Box::new(*b.run(context));
+                pair(a, b)
+            }
             Apply(a, b) => match *a.run(context) {
                 Integer(Add) => match *b.run(context) {
                     Pair(a, b) => match (*a.run(context), *b.run(context)) {
