@@ -3,6 +3,7 @@ pub mod integer;
 pub mod r#let;
 pub mod name;
 pub mod pair;
+pub mod token;
 
 use crate::term::*;
 use crate::text::*;

@@ -41,6 +41,27 @@ where
     fn drop(self, text: &str) -> Result<&str, Error>;
 }
 
+pub trait DropMany<Error>
+where
+    Self: Sized,
+{
+    fn drop_many(self, text: &str) -> (&str, usize);
+}
+
+impl<Error, T> DropMany<Error> for T
+where
+    T: Drop<Error> + Copy,
+{
+    fn drop_many(self, mut text: &str) -> (&str, usize) {
+        let mut count = 0;
+        while let Ok(new_text) = self.drop(text) {
+            text = new_text;
+            count += 1;
+        }
+        (text, count)
+    }
+}
+
 impl Eat<(), ()> for char {
     fn eat(s: &str, _data: ()) -> Result<(&str, char), ()> {
         let c = s.chars().next().ok_or(())?;

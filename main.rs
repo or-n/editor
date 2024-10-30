@@ -11,6 +11,8 @@ use std::collections::HashMap;
 
 fn main() {
     let source = include_str!("examples/blep");
+    let tokens = token::Token::eat_many(source, ());
+    println!("{:?}", tokens);
     let (_, term) = BTerm::eat(source, Settings::default()).unwrap();
     let mut context = HashMap::new();
     context.insert("x".to_string(), integer(i(1)));
