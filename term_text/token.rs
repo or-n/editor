@@ -37,7 +37,7 @@ struct Special(char);
 impl Eat<(), ()> for Special {
     fn eat(text: &str, _data: ()) -> Result<(&str, Self), ()> {
         let (text, c) = char::eat(text, ())?;
-        if !".:()+*".contains(c) {
+        if !".,:()+*".contains(c) {
             return Err(());
         }
         Ok((text, Special(c)))
