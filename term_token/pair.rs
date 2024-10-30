@@ -1,7 +1,7 @@
 use crate::term::*;
 use crate::token::*;
 
-use crate::term_text::token::Token;
+use crate::term_text::{settings::*, token::Token};
 
 #[derive(Debug)]
 pub enum Error {
@@ -20,10 +20,10 @@ impl Eat<Token, Error, ()> for Term {
         use Error::*;
         use Token::*;
         let i = Special('(').drop(i).map_err(|_| L)?;
-        let (i, a) = BTerm::eat(i, ()).map_err(A)?;
+        let (i, a) = BTerm::eat(i, Settings::default()).map_err(A)?;
         let i = Special(',').drop(i).map_err(|_| Comma)?;
         let i = Whitespace(' ', 1).drop(i).map_err(|_| Space)?;
-        let (i, b) = BTerm::eat(i, ()).map_err(A)?;
+        let (i, b) = BTerm::eat(i, Settings::default()).map_err(A)?;
         let i = Special(')').drop(i).map_err(|_| R)?;
         Ok((i, Self(pair(a, b))))
     }

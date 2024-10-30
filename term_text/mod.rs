@@ -3,21 +3,12 @@ pub mod integer;
 pub mod r#let;
 pub mod name;
 pub mod pair;
+pub mod settings;
 pub mod token;
 
 use crate::term::*;
 use crate::text::*;
-
-#[derive(Debug, Clone, Copy)]
-pub struct Settings {
-    pub apply: bool,
-}
-
-impl Default for Settings {
-    fn default() -> Self {
-        Self { apply: true }
-    }
-}
+use settings::*;
 
 #[derive(Debug)]
 pub enum TermError {

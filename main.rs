@@ -6,8 +6,7 @@ mod text;
 mod token;
 
 use term::*;
-// use term_text::*;
-// use term_token::*;
+use term_text::settings::*;
 use text::EatMany;
 use token::Eat;
 
@@ -19,8 +18,7 @@ fn main() {
     let source = include_str!("examples/blep");
     let (_, tokens) = Token::eat_many(source, ());
     println!("{:?}", tokens);
-    // let (_, term) = BTerm::eat(source, Settings::default()).unwrap();
-    let (_, term) = BTerm::eat(&tokens, ()).unwrap();
+    let (_, term) = BTerm::eat(&tokens, Settings::default()).unwrap();
     let mut context = HashMap::new();
     context.insert("x".to_string(), integer(i(1)));
     println!("{:?}", term.run(&mut context));

@@ -2,7 +2,7 @@ pub mod integer;
 pub mod pair;
 
 use crate::term::*;
-use crate::term_text::token::*;
+use crate::term_text::{settings::*, token::*};
 use crate::token::*;
 
 #[derive(Debug)]
@@ -10,8 +10,9 @@ pub enum Error {
     Invalid,
 }
 
-impl Eat<Token, Error, ()> for BTerm {
-    fn eat(i: &[Token], _data: ()) -> Result<(&[Token], Self), Error> {
+impl Eat<Token, Error, Settings> for BTerm {
+    fn eat(i: &[Token], data: Settings) -> Result<(&[Token], Self), Error> {
+        if data.apply {}
         if let Ok((i, term)) = pair::Term::eat(i, ()) {
             return Ok((i, term.0));
         }
