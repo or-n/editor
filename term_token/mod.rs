@@ -47,3 +47,12 @@ impl Eat<Token, Error, Settings> for BTerm {
         Err(Error::Invalid)
     }
 }
+
+pub fn sep(i: &[Token]) -> Result<&[Token], ()> {
+    if let Ok(i) = Token::Whitespace(' ', 1).drop(i) {
+        return Ok(i);
+    }
+    let i = Token::Whitespace('\n', 1).drop(i).map_err(|_| ())?;
+    let i = Token::Whitespace('\t', 1).drop(i).map_err(|_| ())?;
+    Ok(i)
+}
