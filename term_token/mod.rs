@@ -1,3 +1,4 @@
+pub mod apply;
 pub mod integer;
 pub mod pair;
 
@@ -12,7 +13,17 @@ pub enum Error {
 
 impl Eat<Token, Error, Settings> for BTerm {
     fn eat(i: &[Token], data: Settings) -> Result<(&[Token], Self), Error> {
-        if data.apply {}
+        if data.apply {
+            if let Ok((i, term)) = apply::Term::eat(
+                i,
+                Settings {
+                    apply: false,
+                    ..data
+                },
+            ) {
+                return Ok((i, term.0));
+            }
+        }
         if let Ok((i, term)) = pair::Term::eat(i, ()) {
             return Ok((i, term.0));
         }
