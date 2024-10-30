@@ -55,12 +55,12 @@ where
     }
 }
 
-impl<Token: Copy> Eat<Token, (), ()> for Token {
+impl<Token: Clone> Eat<Token, (), ()> for Token {
     fn eat(i: &[Token], _data: ()) -> Result<(&[Token], Token), ()> {
         if i.is_empty() {
             return Err(());
         }
-        Ok((&i[1..], i[0]))
+        Ok((&i[1..], i[0].clone()))
     }
 }
 
