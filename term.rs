@@ -11,6 +11,8 @@ pub enum Term {
     Integer(Integer),
     Pair(BTerm, BTerm),
     Apply(BTerm, BTerm),
+    InfixL(BTerm, BTerm, BTerm),
+    InfixR(BTerm, BTerm, BTerm),
 }
 
 #[derive(Debug, Clone)]
@@ -38,6 +40,14 @@ pub fn pair(a: BTerm, b: BTerm) -> BTerm {
 
 pub fn apply(a: BTerm, b: BTerm) -> BTerm {
     Box::new(Term::Apply(a, b))
+}
+
+pub fn infixl(a: BTerm, f: BTerm, b: BTerm) -> BTerm {
+    Box::new(Term::InfixL(a, f, b))
+}
+
+pub fn infixr(a: BTerm, f: BTerm, b: BTerm) -> BTerm {
+    Box::new(Term::InfixR(a, f, b))
 }
 
 pub fn i(i: isize) -> Integer {
@@ -97,6 +107,8 @@ impl Term {
                 },
                 other => apply(Box::new(other), b.clone()),
             },
+            InfixL(a, f, b) => apply(f.clone(), pair(a.clone(), b.clone())).run(context),
+            InfixR(a, f, b) => apply(f.clone(), pair(a.clone(), b.clone())).run(context),
         }
     }
 }

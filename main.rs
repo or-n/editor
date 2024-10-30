@@ -18,7 +18,7 @@ fn main() {
     let source = include_str!("examples/blep");
     let (_, tokens) = Token::eat_many(source, ());
     println!("{:?}", tokens);
-    let (rest, term) = BTerm::eat(&tokens, Settings::default()).unwrap();
+    let (rest, term) = BTerm::eat(&tokens, Settings::all(true)).unwrap();
     println!("{:?} {:?}", rest, term);
     let mut context = HashMap::new();
     context.insert("x".to_string(), integer(i(1)));

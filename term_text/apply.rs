@@ -6,18 +6,25 @@ use super::*;
 #[derive(Debug)]
 pub enum Error {
     A(TermError),
-    Sep,
+    Space,
     B(TermError),
 }
 
 pub struct Term(pub BTerm);
 
-impl Eat<Error, Settings> for Term {
-    fn eat(text: &str, data: Settings) -> Result<(&str, Self), Error> {
+impl Eat<Error, ()> for Term {
+    fn eat(text: &str, _data: ()) -> Result<(&str, Self), Error> {
         use Error::*;
-        let (text, a) = BTerm::eat(text, data).map_err(A)?;
-        let text = ' '.drop(text).map_err(|_| Sep)?;
-        let (text, b) = BTerm::eat(text, data).map_err(B)?;
+        let (text, a) = BTerm::eat(
+            text,
+            Settings {
+                apply: false,
+                ..Settings::all(true)
+            },
+        )
+        .map_err(A)?;
+        let text = ' '.drop(text).map_err(|_| Space)?;
+        let (text, b) = BTerm::eat(text, Settings::all(false)).map_err(B)?;
         Ok((text, Self(apply(a, b))))
     }
 }

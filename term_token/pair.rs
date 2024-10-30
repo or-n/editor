@@ -20,10 +20,10 @@ impl Eat<Token, Error, ()> for Term {
         use Error::*;
         use Token::*;
         let i = Special('(').drop(i).map_err(|_| L)?;
-        let (i, a) = BTerm::eat(i, Settings::default()).map_err(A)?;
+        let (i, a) = BTerm::eat(i, Settings::all(true)).map_err(A)?;
         let i = Special(',').drop(i).map_err(|_| Comma)?;
         let i = Whitespace(' ', 1).drop(i).map_err(|_| Space)?;
-        let (i, b) = BTerm::eat(i, Settings::default()).map_err(A)?;
+        let (i, b) = BTerm::eat(i, Settings::all(true)).map_err(A)?;
         let i = Special(')').drop(i).map_err(|_| R)?;
         Ok((i, Self(pair(a, b))))
     }

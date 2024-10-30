@@ -21,13 +21,7 @@ impl Eat<TermError, Settings> for BTerm {
             return Ok((text, term.0));
         }
         if data.apply {
-            if let Ok((text, term)) = apply::Term::eat(
-                text,
-                Settings {
-                    apply: false,
-                    ..data
-                },
-            ) {
+            if let Ok((text, term)) = apply::Term::eat(text, ()) {
                 return Ok((text, term.0));
             }
         }
