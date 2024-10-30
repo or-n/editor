@@ -1,7 +1,9 @@
 mod digit_text;
 mod term;
 mod term_text;
+mod term_token;
 mod text;
+mod token;
 
 use term::*;
 use term_text::*;
@@ -11,7 +13,7 @@ use std::collections::HashMap;
 
 fn main() {
     let source = include_str!("examples/blep");
-    let tokens = token::Token::eat_many(source, ());
+    let tokens = term_text::token::Token::eat_many(source, ());
     println!("{:?}", tokens);
     let (_, term) = BTerm::eat(source, Settings::default()).unwrap();
     let mut context = HashMap::new();
