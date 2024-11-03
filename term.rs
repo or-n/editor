@@ -1,10 +1,11 @@
+use enum_as_inner::EnumAsInner;
 use std::collections::HashMap;
 
 pub type Name = String;
 
 pub type BTerm = Box<Term>;
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, EnumAsInner)]
 pub enum Term {
     Let(Name, BTerm, BTerm),
     Parameter(Name),
@@ -13,9 +14,17 @@ pub enum Term {
     Apply(BTerm, BTerm),
     InfixL(BTerm, BTerm, BTerm),
     InfixR(BTerm, BTerm, BTerm),
+    If(BTerm, Vec<(isize, Branch)>),
+    IfLet(BTerm, Vec<(isize, Branch)>, (isize, Branch)),
 }
 
 #[derive(Debug, Clone)]
+pub struct Branch {
+    pub name: Name,
+    pub block: BTerm,
+}
+
+#[derive(Debug, Clone, EnumAsInner)]
 pub enum Integer {
     I(isize),
     Add,
@@ -46,6 +55,14 @@ pub fn infixl(a: BTerm, f: BTerm, b: BTerm) -> BTerm {
     Box::new(Term::InfixL(a, f, b))
 }
 
+pub fn r#if(a: BTerm, b: Vec<(isize, Branch)>) -> BTerm {
+    Box::new(Term::If(a, b))
+}
+
+pub fn iflet(a: BTerm, b: Vec<(isize, Branch)>, c: (isize, Branch)) -> BTerm {
+    Box::new(Term::IfLet(a, b, c))
+}
+
 pub fn infixr(a: BTerm, f: BTerm, b: BTerm) -> BTerm {
     Box::new(Term::InfixR(a, f, b))
 }
@@ -63,52 +80,52 @@ pub fn mul() -> Integer {
 }
 
 impl Term {
-    pub fn run(&self, context: &mut HashMap<Name, BTerm>) -> BTerm {
+    pub fn run(self, context: &mut HashMap<Name, BTerm>) -> BTerm {
         use self::Integer::*;
         use Term::*;
         match self {
             Let(name, a, b) => {
-                let a_value = a.run(context);
-                context.insert(name.clone(), a_value);
+                let a = a.run(context);
+                context.insert(name.clone(), a);
                 b.run(context)
             }
-            Parameter(name) => context
-                .get(name)
-                .unwrap_or(&parameter(name.clone()))
-                .clone(),
-            Integer(i) => integer(i.clone()),
+            Parameter(name) => context.get(&name).unwrap_or(&parameter(name)).clone(),
+            Integer(i) => integer(i),
             Pair(a, b) => {
-                let a = Box::new(*a.run(context));
-                let b = Box::new(*b.run(context));
-                pair(a, b)
+                let (a, b) = (*a.run(context), *b.run(context));
+                pair(Box::new(a), Box::new(b))
             }
-            Apply(a, b) => match *a.run(context) {
-                Integer(Add) => match *b.run(context) {
-                    Pair(a, b) => match (*a.run(context), *b.run(context)) {
-                        (Integer(I(a)), Integer(I(b))) => integer(i(a + b)),
-                        (a_value, b_value) => {
-                            let a = Box::new(a_value);
-                            let b = Box::new(b_value);
-                            apply(integer(add()), pair(a, b))
-                        }
-                    },
-                    other => apply(integer(add()), Box::new(other)),
-                },
-                Integer(Mul) => match *b.run(context) {
-                    Pair(a, b) => match (*a.run(context), *b.run(context)) {
-                        (Integer(I(a)), Integer(I(b))) => integer(i(a * b)),
-                        (a_value, b_value) => {
-                            let a = Box::new(a_value);
-                            let b = Box::new(b_value);
-                            apply(integer(mul()), pair(a, b))
-                        }
-                    },
-                    other => apply(integer(mul()), Box::new(other)),
-                },
-                other => apply(Box::new(other), b.clone()),
-            },
-            InfixL(a, f, b) => apply(f.clone(), pair(a.clone(), b.clone())).run(context),
-            InfixR(a, f, b) => apply(f.clone(), pair(a.clone(), b.clone())).run(context),
+            Apply(a, b) => {
+                let (a, b) = (*a.run(context), *b.run(context));
+                let result = match a {
+                    Integer(Add) => as_i_pair(&b).map(|(v1, v2)| integer(i(v1 + v2))),
+                    Integer(Mul) => as_i_pair(&b).map(|(v1, v2)| integer(i(v1 * v2))),
+                    _ => None,
+                };
+                result.unwrap_or_else(|| apply(Box::new(a), Box::new(b)))
+            }
+            InfixL(a, f, b) | InfixR(a, f, b) => apply(f, pair(a, b)).run(context),
+            If(a, branches) => {
+                let a = *a.run(context);
+                let mut try_run_branch = || {
+                    let (tag, value) = a.as_pair()?;
+                    let tag_i = tag.as_integer()?.as_i()?;
+                    let branch = branches
+                        .iter()
+                        .find_map(|x| (x.0 == *tag_i).then(|| x.1.clone()))?;
+                    Some(r#let(branch.name, value.clone(), branch.block).run(context))
+                };
+                try_run_branch().unwrap_or_else(|| r#if(Box::new(a), branches))
+            }
+            IfLet(a, mut branches, default_branch) => {
+                branches.push(default_branch);
+                If(a, branches).run(context)
+            }
         }
     }
+}
+
+fn as_i_pair(x: &Term) -> Option<(isize, isize)> {
+    let (a, b) = x.as_pair()?;
+    Some((*a.as_integer()?.as_i()?, *b.as_integer()?.as_i()?))
 }

@@ -20,11 +20,6 @@ impl Eat<Token, Error, Settings> for BTerm {
         if let Ok((i, term)) = r#let::Term::eat(i, ()) {
             return Ok((i, term.0));
         }
-        if data.apply {
-            if let Ok((i, term)) = apply::Term::eat(i, ()) {
-                return Ok((i, term.0));
-            }
-        }
         if data.infixl {
             if let Ok((i, term)) = infixl::Term::eat(i, ()) {
                 return Ok((i, term.0));
@@ -32,6 +27,11 @@ impl Eat<Token, Error, Settings> for BTerm {
         }
         if data.infixr {
             if let Ok((i, term)) = infixr::Term::eat(i, ()) {
+                return Ok((i, term.0));
+            }
+        }
+        if data.apply {
+            if let Ok((i, term)) = apply::Term::eat(i, ()) {
                 return Ok((i, term.0));
             }
         }

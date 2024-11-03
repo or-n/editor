@@ -22,7 +22,14 @@ impl Eat<Token, Error, ()> for Term {
         let (i, f) = BTerm::eat(i, Settings::all(false)).map_err(F)?;
         let i = Token::Special('.').drop(i).map_err(|_| Dot)?;
         let i = Token::Whitespace(' ', 1).drop(i).map_err(|_| Space2)?;
-        let (i, b) = BTerm::eat(i, Settings::all(true)).map_err(B)?;
+        let (i, b) = BTerm::eat(
+            i,
+            Settings {
+                infixl: false,
+                ..Settings::all(true)
+            },
+        )
+        .map_err(B)?;
         Ok((i, Self(infixr(a, f, b))))
     }
 }

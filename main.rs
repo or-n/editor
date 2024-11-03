@@ -19,8 +19,7 @@ fn main() {
     let (_, tokens) = Token::eat_many(source, ());
     println!("{:?}", tokens);
     let (rest, term) = BTerm::eat(&tokens, Settings::all(true)).unwrap();
-    println!("{:?} {:?}", rest, term);
+    println!("{:?}\n{:?}", rest, term);
     let mut context = HashMap::new();
-    context.insert("x".to_string(), integer(i(1)));
     println!("{:?}", term.run(&mut context));
 }
