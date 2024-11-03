@@ -1,5 +1,6 @@
 pub mod apply;
 pub mod r#if;
+pub mod iflet;
 pub mod infixl;
 pub mod infixr;
 pub mod integer;
@@ -19,6 +20,9 @@ pub enum Error {
 impl Eat<Token, Error, Settings> for BTerm {
     fn eat(i: &[Token], data: Settings) -> Result<(&[Token], Self), Error> {
         if let Ok((i, term)) = r#if::Term::eat(i, ()) {
+            return Ok((i, term.0));
+        }
+        if let Ok((i, term)) = iflet::Term::eat(i, ()) {
             return Ok((i, term.0));
         }
         if let Ok((i, term)) = r#let::Term::eat(i, ()) {

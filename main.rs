@@ -15,7 +15,7 @@ use term_text::token::Token;
 use std::collections::HashMap;
 
 fn main() {
-    let source = include_str!("examples/if");
+    let source = include_str!("examples/iflet");
     let (_, tokens) = Token::eat_many(source, ());
     println!("{:?}", tokens);
     let (rest, term) = BTerm::eat(&tokens, Settings::all(true)).unwrap();
