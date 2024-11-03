@@ -34,6 +34,7 @@ where
     fn drop(self, tokens: &[Token]) -> Result<&[Token], Error>;
 }
 
+#[allow(dead_code)]
 pub trait DropMany<Token, Error>
 where
     Self: Sized,
