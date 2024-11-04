@@ -1,4 +1,5 @@
 pub mod apply;
+pub mod from_tokens;
 pub mod integer;
 pub mod r#let;
 pub mod name;
@@ -7,7 +8,7 @@ pub mod settings;
 pub mod token;
 
 use crate::term::*;
-use crate::text::*;
+use crate::util::text::*;
 use settings::*;
 
 #[derive(Debug)]

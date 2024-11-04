@@ -1,5 +1,7 @@
 value: (2, (21, 37))
 2 v: if value
-	0 v: 10
+	0 v:
+		x: 10
+		x
 	1 v: 20
 v

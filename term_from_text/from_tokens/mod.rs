@@ -5,12 +5,11 @@ pub mod infixl;
 pub mod infixr;
 pub mod integer;
 pub mod r#let;
-pub mod name;
 pub mod pair;
 
 use crate::term::*;
-use crate::term_text::{settings::*, token::*};
-use crate::token::*;
+use crate::term_from_text::{settings::*, token::Token};
+use crate::util::token::*;
 
 #[derive(Debug)]
 pub enum Error {
@@ -63,4 +62,14 @@ pub fn sep(i: &[Token]) -> Result<&[Token], ()> {
     let i = Token::Whitespace('\n', 1).drop(i).map_err(|_| ())?;
     let i = Token::Whitespace('\t', 1).drop(i).map_err(|_| ())?;
     Ok(i)
+}
+
+pub fn eat_name(i: &[Token]) -> Option<(&[Token], String)> {
+    let (i, token) = Token::eat(i, ()).ok()?;
+    Some((i, token.as_name()?.to_string()))
+}
+
+pub fn eat_isize(i: &[Token]) -> Option<(&[Token], isize)> {
+    let (i, token) = Token::eat(i, ()).ok()?;
+    Some((i, token.as_integer()?.clone()))
 }

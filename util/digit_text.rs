@@ -1,4 +1,4 @@
-use crate::text::*;
+use super::text::*;
 
 pub struct Digit(u32);
 

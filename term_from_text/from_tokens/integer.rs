@@ -1,6 +1,6 @@
 use crate::term::*;
-use crate::term_text::token::*;
-use crate::token::*;
+use crate::term_from_text::token::*;
+use crate::util::token::*;
 
 #[derive(Debug)]
 pub enum Error {

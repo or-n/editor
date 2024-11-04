@@ -1,5 +1,5 @@
 use crate::term::*;
-use crate::text::*;
+use crate::util::text::*;
 
 #[derive(Debug)]
 pub enum Error {

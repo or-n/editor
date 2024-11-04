@@ -1,7 +1,8 @@
-use super::name;
-use crate::text::*;
+use crate::term_from_text::name;
+use crate::util::text::*;
+use enum_as_inner::EnumAsInner;
 
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq, EnumAsInner)]
 pub enum Token {
     Special(char),
     Whitespace(char, usize),

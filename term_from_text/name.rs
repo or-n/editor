@@ -1,4 +1,4 @@
-use crate::text::*;
+use crate::util::text::*;
 
 #[derive(Debug)]
 pub enum NameCharError {

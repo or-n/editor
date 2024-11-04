@@ -1,16 +1,11 @@
-mod digit_text;
 mod term;
-mod term_text;
-mod term_token;
-mod text;
-mod token;
+mod term_from_text;
+mod util;
 
 use term::*;
-use term_text::settings::*;
-use text::EatMany;
-use token::Eat;
-
-use term_text::token::Token;
+use term_from_text::{settings::*, token::Token};
+use util::text::EatMany;
+use util::token::Eat;
 
 use std::collections::HashMap;
 
