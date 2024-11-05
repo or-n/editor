@@ -1,3 +1,4 @@
+mod editor;
 mod term;
 mod term_from_text;
 mod util;
@@ -16,5 +17,14 @@ fn main() {
     let (rest, term) = BTerm::eat(&tokens, Settings::all(true)).unwrap();
     println!("{:?}\n{:?}", rest, term);
     let mut context = HashMap::new();
-    println!("{:?}", term.run(&mut context));
+    println!("{:?}", term.clone().run(&mut context));
+
+    let node: editor::zipper::Node<_, _> = term.into();
+    println!("{:?}", node);
+
+    let mut zipper = editor::zipper::Zipper { node, went: vec![] };
+    zipper.down(1).unwrap();
+    println!("{:?}", zipper);
+    zipper.up().unwrap();
+    println!("{:?}", zipper);
 }
