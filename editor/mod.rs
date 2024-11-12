@@ -1,4 +1,5 @@
 pub mod kid;
+pub mod print;
 pub mod zipper;
 
 pub enum Command {

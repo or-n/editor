@@ -10,21 +10,24 @@ use util::token::Eat;
 
 use std::collections::HashMap;
 
+use editor::print::*;
+
 fn main() {
     let source = include_str!("examples/iflet");
     let (_, tokens) = Token::eat_many(source, ());
     println!("{:?}", tokens);
     let (rest, term) = BTerm::eat(&tokens, Settings::all(true)).unwrap();
     println!("{:?}\n{:?}", rest, term);
-    let mut context = HashMap::new();
-    println!("{:?}", term.clone().run(&mut context));
+    print(Context, &term);
+    // let mut context = HashMap::new();
+    // println!("{:?}", term.clone().run(&mut context));
 
-    let node: editor::zipper::Node<_, _> = term.into();
-    println!("{:?}", node);
+    // let node: editor::zipper::Node<_, _> = term.into();
+    // println!("{:?}", node);
 
-    let mut zipper = editor::zipper::Zipper { node, went: vec![] };
-    zipper.down(1).unwrap();
-    println!("{:?}", zipper);
-    zipper.up().unwrap();
-    println!("{:?}", zipper);
+    // let mut zipper = editor::zipper::Zipper { node, went: vec![] };
+    // zipper.down(1).unwrap();
+    // println!("{:?}", zipper);
+    // zipper.up().unwrap();
+    // println!("{:?}", zipper);
 }
