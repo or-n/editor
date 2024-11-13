@@ -18,7 +18,13 @@ fn main() {
     println!("{:?}", tokens);
     let (rest, term) = BTerm::eat(&tokens, Settings::all(true)).unwrap();
     println!("{:?}\n{:?}", rest, term);
-    print(Context, &term);
+    editor::Model {
+        input: String::new(),
+        terminate: false,
+        w: std::io::stdout(),
+    }
+    .run(&term)
+    .unwrap();
     // let mut context = HashMap::new();
     // println!("{:?}", term.clone().run(&mut context));
 
