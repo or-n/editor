@@ -16,6 +16,7 @@ pub enum Term {
     InfixR(BTerm, BTerm, BTerm),
     If(BTerm, Vec<Branch>),
     IfLet(BTerm, Vec<Branch>, Branch),
+    Nil,
 }
 
 #[derive(Debug, Clone)]
@@ -68,6 +69,10 @@ pub fn infixr(a: BTerm, f: BTerm, b: BTerm) -> BTerm {
     Box::new(Term::InfixR(a, f, b))
 }
 
+pub fn nil() -> BTerm {
+    Box::new(Term::Nil)
+}
+
 pub fn i(i: isize) -> Integer {
     Integer::I(i)
 }
@@ -85,6 +90,7 @@ impl Term {
         use self::Integer::*;
         use Term::*;
         match self {
+            Nil => nil(),
             Let(name, a, b) => {
                 let a = a.run(context);
                 context.insert(name.clone(), a);

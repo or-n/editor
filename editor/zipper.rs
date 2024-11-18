@@ -101,6 +101,7 @@ impl Zipper {
             InfixR(_, _, _) => 3,
             If(_, branches) => branches.len() + 1,
             IfLet(_, branches, _) => branches.len() + 2,
+            Nil => 0,
         }
     }
 
@@ -111,12 +112,12 @@ impl Zipper {
             LetA { name, b } => {
                 let a = self.node.clone();
                 self.node = r#let(name, a, b);
-                Some(0)
+                Some(1)
             }
             LetB { name, a } => {
                 let b = self.node.clone();
                 self.node = r#let(name, a, b);
-                Some(1)
+                Some(0)
             }
             PairA { b } => {
                 let a = self.node.clone();
@@ -191,7 +192,7 @@ impl Zipper {
             IfLetValue { branches, default } => {
                 let value = self.node.clone();
                 self.node = iflet(value, branches, default);
-                Some(0)
+                Some(1)
             }
             IfLetBranch {
                 value,
@@ -218,7 +219,7 @@ impl Zipper {
                 let block = self.node.clone();
                 let default = Branch { tag, name, block };
                 self.node = iflet(value, branches, default);
-                Some(1)
+                Some(0)
             }
         }
     }
@@ -227,12 +228,12 @@ impl Zipper {
         use Term::*;
         match *self.node.clone() {
             Let(name, a, b) => match i {
-                0 => {
+                1 => {
                     self.went.push(Went::LetA { name, b });
                     self.node = a;
                     Some(())
                 }
-                1 => {
+                0 => {
                     self.went.push(Went::LetB { name, a });
                     self.node = b;
                     Some(())
@@ -324,12 +325,12 @@ impl Zipper {
                 }
             },
             IfLet(value, branches, default) => match i {
-                0 => {
+                1 => {
                     self.went.push(Went::IfLetValue { branches, default });
                     self.node = value;
                     Some(())
                 }
-                1 => {
+                0 => {
                     self.went.push(Went::IfLetDefault {
                         value,
                         branches,
@@ -354,6 +355,7 @@ impl Zipper {
                     Some(())
                 }
             },
+            Nil => None,
         }
     }
 }

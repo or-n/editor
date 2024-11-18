@@ -14,17 +14,26 @@ pub use crossterm::{
 #[derive(Clone, Copy)]
 pub struct Context {
     pub indent: usize,
+    pub simple: bool,
 }
 
 impl Context {
-    pub fn next_indent(&self) -> Self {
+    pub fn next_indent(self) -> Self {
         Self {
             indent: self.indent + 1,
+            ..self
+        }
+    }
+
+    pub fn not_simple(self) -> Self {
+        Self {
+            simple: false,
+            ..self
         }
     }
 }
 
-pub fn print<W>(w: &mut W, context: Context, term: &Term) -> io::Result<()>
+pub fn print<W>(w: &mut W, mut context: Context, term: &Term) -> io::Result<()>
 where
     W: io::Write,
 {
@@ -38,10 +47,26 @@ where
             queue!(w, Print(' '))?;
             print(w, context, b)?;
         }
+        InfixL(a, f, b) => {
+            print(w, context, a)?;
+            queue!(w, Print(' '))?;
+            queue!(w, Print('.'))?;
+            print(w, context, f)?;
+            queue!(w, Print(' '))?;
+            print(w, context, b)?;
+        }
+        InfixR(a, f, b) => {
+            print(w, context, a)?;
+            queue!(w, Print(' '))?;
+            print(w, context, f)?;
+            queue!(w, Print('.'))?;
+            queue!(w, Print(' '))?;
+            print(w, context, b)?;
+        }
         Let(n, a, b) => {
             queue!(w, Print(n), Print(": "))?;
-            print(w, context, a)?;
-            queue!(w, cursor::MoveToNextLine(1))?;
+            print(w, context.not_simple(), a)?;
+            next_line(w, context.indent)?;
             print(w, context, b)?;
         }
         Pair(a, b) => {
@@ -52,18 +77,43 @@ where
             queue!(w, Print(')'))?;
         }
         Integer(i) => print_integer(w, context, i)?,
-        IfLet(a, branches, default) => {
-            queue!(w, Print(format!("{} {}: if ", default.tag, default.name)))?;
-            print(w, context, a)?;
-            for b in branches {
-                print_branch(w, context.next_indent(), b)?;
+        If(value, branches) => {
+            if !context.simple {
+                context = context.next_indent();
+                context.simple = true;
+                next_line(w, context.indent)?;
             }
-            queue!(w, cursor::MoveToNextLine(1))?;
+            queue!(w, Print("if "))?;
+            print(w, context.not_simple(), value)?;
+            for branch in branches {
+                print_branch(w, context.next_indent(), branch)?;
+            }
+        }
+        IfLet(a, branches, default) => {
+            if !context.simple {
+                context = context.next_indent();
+                context.simple = true;
+                next_line(w, context.indent)?;
+            }
+            queue!(w, Print(format!("{} {}: if ", default.tag, default.name)))?;
+            print(w, context.not_simple(), a)?;
+            for branch in branches {
+                print_branch(w, context.next_indent(), branch)?;
+            }
+            next_line(w, context.indent)?;
             print(w, context, &*default.block)?;
         }
-        _ => {}
+        Nil => queue!(w, Print("()"))?,
     }
     Ok(())
+}
+
+fn next_line<W: io::Write>(w: &mut W, indent: usize) -> io::Result<()> {
+    queue!(
+        w,
+        cursor::MoveToNextLine(1),
+        cursor::MoveToColumn(indent as u16 * 4)
+    )
 }
 
 fn print_branch<W>(
@@ -74,20 +124,9 @@ fn print_branch<W>(
 where
     W: io::Write,
 {
-    queue!(w, cursor::MoveToNextLine(1))?;
-    print_indent(w, context)?;
+    next_line(w, context.indent)?;
     queue!(w, Print(format!("{} {}: ", branch.tag, branch.name)))?;
     print(w, context, &*branch.block)?;
-    Ok(())
-}
-
-fn print_indent<W>(w: &mut W, context: Context) -> io::Result<()>
-where
-    W: io::Write,
-{
-    for _ in 0..context.indent {
-        queue!(w, Print("    "))?;
-    }
     Ok(())
 }
 
@@ -111,23 +150,25 @@ where
 
 pub fn print_zipper<W>(
     w: &mut W,
-    context: Context,
+    mut context: Context,
     zipper: &Zipper,
 ) -> io::Result<()>
 where
     W: io::Write,
 {
     queue!(w, ResetColor)?;
+    let context_backup = context;
     for went in &zipper.went {
         use Went::*;
         match went {
             LetA { name, .. } => {
                 queue!(w, Print(name), Print(": "))?;
+                context.simple = false;
             }
             LetB { name, a } => {
                 queue!(w, Print(name), Print(": "))?;
-                print(w, context, a)?;
-                queue!(w, cursor::MoveToNextLine(1))?;
+                print(w, context.not_simple(), a)?;
+                next_line(w, context.indent)?;
             }
             PairA { .. } => {
                 queue!(w, Print('('))?;
@@ -166,6 +207,7 @@ where
             }
             IfValue { .. } => {
                 queue!(w, Print("if "))?;
+                context.simple = false;
             }
             IfBranch {
                 value,
@@ -175,18 +217,17 @@ where
                 ..
             } => {
                 queue!(w, Print("if "))?;
-                print(w, context, value)?;
-                queue!(w, cursor::MoveToNextLine(1))?;
+                print(w, context.not_simple(), value)?;
                 for branch in before {
                     print_branch(w, context.next_indent(), branch)?;
                 }
-                queue!(w, cursor::MoveToNextLine(1))?;
-                print_indent(w, context.next_indent())?;
+                next_line(w, context.next_indent().indent)?;
                 queue!(w, Print(format!("{} {}: ", tag, name)))?;
             }
             IfLetValue { default, .. } => {
                 let iflet = format!("{} {}: if ", default.tag, default.name);
                 queue!(w, Print(iflet))?;
+                context.simple = false;
             }
             IfLetBranch {
                 value,
@@ -198,12 +239,11 @@ where
             } => {
                 let iflet = format!("{} {}: if ", default.tag, default.name);
                 queue!(w, Print(iflet))?;
-                print(w, context, value)?;
+                print(w, context.not_simple(), value)?;
                 for branch in before {
                     print_branch(w, context.next_indent(), branch)?;
                 }
-                queue!(w, cursor::MoveToNextLine(1))?;
-                print_indent(w, context.next_indent())?;
+                next_line(w, context.next_indent().indent)?;
                 queue!(w, Print(format!("{} {}: ", tag, name)))?;
             }
             IfLetDefault {
@@ -213,11 +253,12 @@ where
                 name,
             } => {
                 queue!(w, Print(format!("{} {}: if ", tag, name)))?;
-                print(w, context, value)?;
+                print(w, context.not_simple(), value)?;
                 for branch in branches {
                     print_branch(w, context.next_indent(), branch)?;
                 }
-                queue!(w, cursor::MoveToNextLine(1))?;
+
+                next_line(w, context.indent)?;
             }
             _ => {}
         }
@@ -225,11 +266,12 @@ where
     queue!(w, SetBackgroundColor(Color::Cyan))?;
     print(w, context, &*zipper.node)?;
     queue!(w, ResetColor)?;
+    context = context_backup;
     for went in zipper.went.iter().rev() {
         use Went::*;
         match went {
             LetA { b, .. } => {
-                queue!(w, cursor::MoveToNextLine(1))?;
+                next_line(w, context.indent)?;
                 print(w, context, b)?;
             }
             PairA { b } => {
@@ -274,21 +316,21 @@ where
             }
             IfBranch { after, .. } => {
                 for branch in after {
-                    print_branch(w, context, branch)?;
+                    print_branch(w, context.next_indent(), branch)?;
                 }
             }
             IfLetValue { branches, default } => {
                 for branch in branches {
                     print_branch(w, context.next_indent(), branch)?;
                 }
-                queue!(w, cursor::MoveToNextLine(1))?;
+                next_line(w, context.indent)?;
                 print(w, context, &*default.block)?;
             }
             IfLetBranch { after, default, .. } => {
                 for branch in after {
                     print_branch(w, context.next_indent(), branch)?;
                 }
-                queue!(w, cursor::MoveToNextLine(1))?;
+                next_line(w, context.indent)?;
                 print(w, context, &*default.block)?;
             }
             _ => {}

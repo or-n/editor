@@ -21,12 +21,10 @@ fn main() {
     editor::Model {
         input: String::new(),
         command: None,
-        w: std::io::stdout(),
         zipper: Zipper::new(term.clone()),
     }
-    .run()
+    .run(&mut std::io::stdout())
     .unwrap();
-
     let mut context = HashMap::new();
     println!("{:?}", term.clone().run(&mut context));
 }

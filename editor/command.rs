@@ -1,3 +1,4 @@
+use crate::term_from_text::name;
 use crate::util::text::*;
 
 #[derive(Clone)]
@@ -16,34 +17,34 @@ pub enum Migrate {
     Right,
 }
 
-#[derive(Clone, Copy, Debug)]
+#[derive(Clone, Debug)]
 pub enum SyntaxItem {
-    I,
+    I(isize),
     Add,
     Mul,
     Pair,
-    Let,
+    Let(String),
     If,
     IfLet,
-    Parameter,
+    Parameter(String),
     Apply,
     InfixL,
     InfixR,
+    Nil,
 }
 
-pub enum Error {
-    Invalid,
-}
-
-impl Eat<Error, ()> for Command {
-    fn eat(i: &str, _data: ()) -> Result<(&str, Self), Error> {
+impl Eat<(), ()> for Command {
+    fn eat(i: &str, _data: ()) -> Result<(&str, Self), ()> {
         if let Ok(i) = "quit".drop(i) {
             return Ok((i, Command::Quit));
         }
         if let Ok((i, migrate)) = Migrate::eat(i, ()) {
             return Ok((i, Command::Migrate(migrate)));
         }
-        Err(Error::Invalid)
+        if let Ok((i, fill)) = SyntaxItem::eat(i, ()) {
+            return Ok((i, Command::Fill(fill)));
+        }
+        Err(())
     }
 }
 
@@ -65,6 +66,41 @@ impl Eat<(), ()> for Migrate {
         }
         if let Ok(i) = "right".drop(i) {
             return Ok((i, Migrate::Right));
+        }
+        Err(())
+    }
+}
+
+impl Eat<(), ()> for SyntaxItem {
+    fn eat(i: &str, _data: ()) -> Result<(&str, Self), ()> {
+        if let Ok((i, n)) = isize::eat(i, ()) {
+            return Ok((i, SyntaxItem::I(n)));
+        }
+        if let Ok(i) = '+'.drop(i) {
+            return Ok((i, SyntaxItem::Add));
+        }
+        if let Ok(i) = '*'.drop(i) {
+            return Ok((i, SyntaxItem::Mul));
+        }
+        if let Ok(i) = "pair".drop(i) {
+            return Ok((i, SyntaxItem::Pair));
+        }
+        if let Ok(i) = "let".drop(i) {
+            let i = ' '.drop(i)?;
+            let (i, n) = name::Term::eat(i, ()).map_err(|_| ())?;
+            return Ok((i, SyntaxItem::Let(n.0)));
+        }
+        if let Ok(i) = "iflet".drop(i) {
+            return Ok((i, SyntaxItem::IfLet));
+        }
+        if let Ok(i) = "if".drop(i) {
+            return Ok((i, SyntaxItem::If));
+        }
+        if let Ok(i) = "()".drop(i) {
+            return Ok((i, SyntaxItem::Nil));
+        }
+        if let Ok((i, n)) = name::Term::eat(i, ()) {
+            return Ok((i, SyntaxItem::Parameter(n.0)));
         }
         Err(())
     }

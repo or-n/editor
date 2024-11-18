@@ -2,9 +2,10 @@ pub mod command;
 pub mod print;
 pub mod zipper;
 
+use crate::term::*;
 use crate::util::text::Eat;
 
-use command::{Command, Migrate};
+use command::{Command, Migrate, SyntaxItem};
 use std::io;
 use std::time::Duration;
 use zipper::Zipper;
@@ -16,33 +17,40 @@ pub use crossterm::{
     execute, queue, terminal,
 };
 
-pub struct Model<W: io::Write> {
+pub struct Model {
     pub input: String,
     pub zipper: Zipper,
     pub command: Option<Command>,
-    pub w: W,
 }
 
-impl<W: io::Write> Model<W> {
-    pub fn run(&mut self) -> io::Result<()> {
-        execute!(self.w, terminal::EnterAlternateScreen, cursor::Show)?;
+impl Model {
+    pub fn run<W: io::Write>(&mut self, w: &mut W) -> io::Result<()> {
+        if let Some(()) = self.zipper.down(0) {}
+        execute!(w, terminal::EnterAlternateScreen, cursor::Show)?;
         terminal::enable_raw_mode()?;
         loop {
             queue!(
-                self.w,
+                w,
                 style::ResetColor,
                 terminal::Clear(ClearType::All),
                 cursor::MoveTo(0, 0)
             )?;
             use print::*;
-            print_zipper(&mut self.w, Context { indent: 0 }, &self.zipper)?;
+            print_zipper(
+                w,
+                Context {
+                    indent: 0,
+                    simple: true,
+                },
+                &self.zipper,
+            )?;
             queue!(
-                self.w,
+                w,
                 cursor::MoveTo(20, 20),
                 Print("Command: "),
                 Print(&self.input)
             )?;
-            self.w.flush()?;
+            w.flush()?;
             if event::poll(Duration::from_millis(100))? {
                 match event::read()? {
                     Event::Key(e) => self.key_event(e),
@@ -54,34 +62,13 @@ impl<W: io::Write> Model<W> {
             if let Some(command) = command {
                 match command {
                     Command::Quit => break,
-                    Command::Migrate(migrate) => match migrate {
-                        Migrate::Up => if let Some(_i) = self.zipper.up() {},
-                        Migrate::Down(i) => {
-                            if let Some(()) = self.zipper.down(i) {}
-                        }
-                        Migrate::Left => {
-                            if let Some(i) = self.zipper.up() {
-                                if let None = self.zipper.down(i - 1) {
-                                    if let Some(()) =
-                                        self.zipper.down(self.zipper.kids() - 1)
-                                    {
-                                    }
-                                }
-                            }
-                        }
-                        Migrate::Right => {
-                            if let Some(i) = self.zipper.up() {
-                                if let None = self.zipper.down(i + 1) {
-                                    if let Some(()) = self.zipper.down(0) {}
-                                }
-                            }
-                        }
-                    },
+                    Command::Migrate(m) => migrate(&mut self.zipper, m),
+                    Command::Fill(f) => fill(&mut self.zipper, f),
                     _ => {}
                 }
             }
         }
-        execute!(self.w, terminal::LeaveAlternateScreen)?;
+        execute!(w, terminal::LeaveAlternateScreen)?;
         terminal::disable_raw_mode()
     }
 
@@ -119,5 +106,76 @@ impl<W: io::Write> Model<W> {
         } else {
             self.input.push(c);
         }
+    }
+}
+
+fn migrate(zipper: &mut Zipper, migrate: Migrate) {
+    use Migrate::*;
+    match migrate {
+        Up => if let Some(_i) = zipper.up() {},
+        Down(i) => if let Some(()) = zipper.down(i) {},
+        Left => {
+            if let Some(i) = zipper.up() {
+                if let None = zipper.down(i - 1) {
+                    zipper.down(zipper.kids() - 1).unwrap()
+                }
+            }
+        }
+        Right => {
+            if let Some(i) = zipper.up() {
+                if let None = zipper.down(i + 1) {
+                    zipper.down(0).unwrap()
+                }
+            }
+        }
+    }
+}
+
+fn fill(zipper: &mut Zipper, syntax_item: SyntaxItem) {
+    use SyntaxItem::*;
+    match syntax_item {
+        I(n) => zipper.node = integer(i(n)),
+        Add => zipper.node = integer(add()),
+        Mul => zipper.node = integer(mul()),
+        Pair => zipper.node = pair(nil(), nil()),
+        Let(n) => {
+            let current = zipper.node.clone();
+            zipper.node = r#let(n, nil(), current);
+        }
+        Parameter(n) => zipper.node = parameter(n),
+        If => {
+            zipper.node = r#if(
+                nil(),
+                vec![
+                    Branch {
+                        tag: 0,
+                        name: "a".to_string(),
+                        block: nil(),
+                    },
+                    Branch {
+                        tag: 1,
+                        name: "b".to_string(),
+                        block: nil(),
+                    },
+                ],
+            )
+        }
+        IfLet => {
+            zipper.node = iflet(
+                nil(),
+                vec![Branch {
+                    tag: 1,
+                    name: "b".to_string(),
+                    block: nil(),
+                }],
+                Branch {
+                    tag: 0,
+                    name: "a".to_string(),
+                    block: nil(),
+                },
+            )
+        }
+        Nil => zipper.node = nil(),
+        _ => {}
     }
 }
