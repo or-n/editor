@@ -32,8 +32,8 @@ impl Eat<Token, Error, ()> for Term {
         let i = Whitespace(' ', 1).drop(i).map_err(|_| Space3)?;
         let (i, a) = BTerm::eat(i, Settings::all(true)).map_err(A)?;
         let i = Whitespace('\n', 1).drop(i).map_err(|_| Newline)?;
-        let (i, b) = <(isize, Branch)>::eat_many(i, ());
+        let (i, b) = Branch::eat_many(i, ());
         let (i, block) = BTerm::eat(i, Settings::all(true)).map_err(Block)?;
-        Ok((i, Self(iflet(a, b, (tag, Branch { name, block })))))
+        Ok((i, Self(iflet(a, b, Branch { tag, name, block }))))
     }
 }

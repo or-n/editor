@@ -2,14 +2,12 @@ use crate::term::{Branch, Integer, Term};
 
 use std::io;
 
-use crossterm::event::KeyEventKind;
 pub use crossterm::{
     cursor,
-    event::{self, Event, KeyCode, KeyEvent},
-    execute, queue,
+    event::{self, Event},
+    queue,
     style::{self, Print},
     terminal::{self, ClearType},
-    Command,
 };
 
 #[derive(Clone, Copy)]
@@ -50,7 +48,7 @@ where
                 w,
                 Print(format!(
                     "{} {}: if ",
-                    default_branch.0, default_branch.1.name
+                    default_branch.tag, default_branch.name
                 ))
             )?;
             print(w, context, a)?;
@@ -64,7 +62,7 @@ where
                     b,
                 )?;
             }
-            print(w, context, &*default_branch.1.block)?;
+            print(w, context, &*default_branch.block)?;
         }
         _ => {}
     }
@@ -74,13 +72,13 @@ where
 fn print_branch<W>(
     w: &mut W,
     context: Context,
-    (tag, branch): &(isize, Branch),
+    branch: &Branch,
 ) -> io::Result<()>
 where
     W: io::Write,
 {
     print_indent(w, context)?;
-    queue!(w, Print(format!("{} {}: ", tag, branch.name)))?;
+    queue!(w, Print(format!("{} {}: ", branch.tag, branch.name)))?;
     print(w, context, &*branch.block)?;
     queue!(w, cursor::MoveToNextLine(1))?;
     Ok(())

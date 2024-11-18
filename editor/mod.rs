@@ -1,27 +1,22 @@
-pub mod kid;
 pub mod print;
 pub mod zipper;
 
 use crate::term::Term;
-use io::Write;
 use std::io;
 use std::time::Duration;
 
 use crossterm::event::KeyEventKind;
 pub use crossterm::{
     cursor,
-    event::{self, Event, KeyCode, KeyEvent, KeyModifiers},
-    execute, queue,
-    style::{self, Print},
-    terminal::{self, ClearType},
-    Command,
+    event::{KeyCode, KeyEvent, KeyModifiers},
+    execute, queue, terminal,
 };
 
-// pub enum Command {
-//     Fill(SyntaxItem),
-//     Forget,
-//     Migrate(Axis<bool>),
-// }
+pub enum Command {
+    Fill(SyntaxItem),
+    Forget,
+    Migrate(Axis<bool>),
+}
 
 pub enum Axis<T> {
     Vertical(T),

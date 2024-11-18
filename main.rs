@@ -10,8 +10,6 @@ use util::token::Eat;
 
 use std::collections::HashMap;
 
-use editor::print::*;
-
 fn main() {
     let source = include_str!("examples/iflet");
     let (_, tokens) = Token::eat_many(source, ());
@@ -25,15 +23,16 @@ fn main() {
     }
     .run(&term)
     .unwrap();
-    // let mut context = HashMap::new();
-    // println!("{:?}", term.clone().run(&mut context));
 
-    // let node: editor::zipper::Node<_, _> = term.into();
-    // println!("{:?}", node);
+    let mut context = HashMap::new();
+    println!("{:?}", term.clone().run(&mut context));
 
-    // let mut zipper = editor::zipper::Zipper { node, went: vec![] };
-    // zipper.down(1).unwrap();
-    // println!("{:?}", zipper);
-    // zipper.up().unwrap();
-    // println!("{:?}", zipper);
+    let mut zipper = editor::zipper::Zipper {
+        node: term,
+        went: vec![],
+    };
+    zipper.down(1).unwrap();
+    println!("{:?}", zipper);
+    zipper.up().unwrap();
+    println!("{:?}", zipper);
 }

@@ -21,7 +21,7 @@ impl Eat<Token, Error, ()> for Term {
         let i = Whitespace(' ', 1).drop(i).map_err(|_| Space)?;
         let (i, a) = BTerm::eat(i, Settings::all(true)).map_err(A)?;
         let i = Whitespace('\n', 1).drop(i).map_err(|_| Newline)?;
-        let (i, b) = <(isize, Branch)>::eat_many(i, ());
+        let (i, b) = Branch::eat_many(i, ());
         Ok((i, Self(r#if(a, b))))
     }
 }
@@ -38,7 +38,7 @@ pub enum BranchError {
     Newline,
 }
 
-impl Eat<Token, BranchError, ()> for (isize, Branch) {
+impl Eat<Token, BranchError, ()> for Branch {
     fn eat(i: &[Token], _data: ()) -> Result<(&[Token], Self), BranchError> {
         use BranchError::*;
         use Token::*;
@@ -56,6 +56,6 @@ impl Eat<Token, BranchError, ()> for (isize, Branch) {
         let i = Whitespace(' ', 1).drop(i).map_err(|_| Space2)?;
         let (i, block) = BTerm::eat(i, Settings::all(true)).map_err(Block)?;
         let i = Whitespace('\n', 1).drop(i).map_err(|_| Newline)?;
-        Ok((i, (tag, Branch { name, block })))
+        Ok((i, Branch { tag, name, block }))
     }
 }

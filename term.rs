@@ -14,12 +14,13 @@ pub enum Term {
     Apply(BTerm, BTerm),
     InfixL(BTerm, BTerm, BTerm),
     InfixR(BTerm, BTerm, BTerm),
-    If(BTerm, Vec<(isize, Branch)>),
-    IfLet(BTerm, Vec<(isize, Branch)>, (isize, Branch)),
+    If(BTerm, Vec<Branch>),
+    IfLet(BTerm, Vec<Branch>, Branch),
 }
 
 #[derive(Debug, Clone)]
 pub struct Branch {
+    pub tag: isize,
     pub name: Name,
     pub block: BTerm,
 }
@@ -55,11 +56,11 @@ pub fn infixl(a: BTerm, f: BTerm, b: BTerm) -> BTerm {
     Box::new(Term::InfixL(a, f, b))
 }
 
-pub fn r#if(a: BTerm, b: Vec<(isize, Branch)>) -> BTerm {
+pub fn r#if(a: BTerm, b: Vec<Branch>) -> BTerm {
     Box::new(Term::If(a, b))
 }
 
-pub fn iflet(a: BTerm, b: Vec<(isize, Branch)>, c: (isize, Branch)) -> BTerm {
+pub fn iflet(a: BTerm, b: Vec<Branch>, c: Branch) -> BTerm {
     Box::new(Term::IfLet(a, b, c))
 }
 
@@ -89,7 +90,7 @@ impl Term {
                 context.insert(name.clone(), a);
                 b.run(context)
             }
-            Parameter(name) => context.get(&name).unwrap_or(&parameter(name)).clone(),
+            Parameter(name) => context.remove(&name).unwrap_or(parameter(name)),
             Integer(i) => integer(i),
             Pair(a, b) => {
                 let (a, b) = (*a.run(context), *b.run(context));
@@ -98,22 +99,33 @@ impl Term {
             Apply(a, b) => {
                 let (a, b) = (*a.run(context), *b.run(context));
                 let result = match a {
-                    Integer(Add) => as_i_pair(&b).map(|(v1, v2)| integer(i(v1 + v2))),
-                    Integer(Mul) => as_i_pair(&b).map(|(v1, v2)| integer(i(v1 * v2))),
+                    Integer(Add) => {
+                        as_i_pair(&b).map(|(v1, v2)| integer(i(v1 + v2)))
+                    }
+                    Integer(Mul) => {
+                        as_i_pair(&b).map(|(v1, v2)| integer(i(v1 * v2)))
+                    }
                     _ => None,
                 };
                 result.unwrap_or_else(|| apply(Box::new(a), Box::new(b)))
             }
-            InfixL(a, f, b) | InfixR(a, f, b) => apply(f, pair(a, b)).run(context),
+            InfixL(a, f, b) | InfixR(a, f, b) => {
+                apply(f, pair(a, b)).run(context)
+            }
             If(a, branches) => {
                 let a = *a.run(context);
                 let mut try_run_branch = || {
                     let (tag, value) = a.as_pair()?;
                     let tag_i = tag.as_integer()?.as_i()?;
-                    let branch = branches
-                        .iter()
-                        .find_map(|x| (x.0 == *tag_i).then(|| x.1.clone()))?;
-                    Some(r#let(branch.name, value.clone(), branch.block).run(context))
+                    let branch = branches.iter().find(|x| x.tag == *tag_i)?;
+                    Some(
+                        r#let(
+                            branch.name.clone(),
+                            value.clone(),
+                            branch.block.clone(),
+                        )
+                        .run(context),
+                    )
                 };
                 try_run_branch().unwrap_or_else(|| r#if(Box::new(a), branches))
             }
