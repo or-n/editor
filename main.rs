@@ -8,6 +8,8 @@ use term_from_text::{settings::*, token::Token};
 use util::text::EatMany;
 use util::token::Eat;
 
+use editor::zipper::Zipper;
+
 use std::collections::HashMap;
 
 fn main() {
@@ -20,19 +22,11 @@ fn main() {
         input: String::new(),
         terminate: false,
         w: std::io::stdout(),
+        zipper: Zipper::new(term.clone()),
     }
-    .run(&term)
+    .run()
     .unwrap();
 
     let mut context = HashMap::new();
     println!("{:?}", term.clone().run(&mut context));
-
-    let mut zipper = editor::zipper::Zipper {
-        node: term,
-        went: vec![],
-    };
-    zipper.down(1).unwrap();
-    println!("{:?}", zipper);
-    zipper.up().unwrap();
-    println!("{:?}", zipper);
 }

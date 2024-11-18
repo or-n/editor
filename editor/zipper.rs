@@ -6,6 +6,12 @@ pub struct Zipper {
     pub went: Vec<Went>,
 }
 
+impl Zipper {
+    pub fn new(node: BTerm) -> Self {
+        Zipper { node, went: vec![] }
+    }
+}
+
 #[derive(Debug)]
 pub enum Went {
     LetA {

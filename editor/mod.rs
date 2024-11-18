@@ -1,9 +1,13 @@
+pub mod command;
 pub mod print;
 pub mod zipper;
 
-use crate::term::Term;
+use crate::util::text::Eat;
+
+use command::Command;
 use std::io;
 use std::time::Duration;
+use zipper::Zipper;
 
 use crossterm::event::KeyEventKind;
 pub use crossterm::{
@@ -12,40 +16,15 @@ pub use crossterm::{
     execute, queue, terminal,
 };
 
-pub enum Command {
-    Fill(SyntaxItem),
-    Forget,
-    Migrate(Axis<bool>),
-}
-
-pub enum Axis<T> {
-    Vertical(T),
-    Horizontal(T),
-}
-
-#[derive(Clone, Copy, Debug)]
-pub enum SyntaxItem {
-    I,
-    Add,
-    Mul,
-    Pair,
-    Let,
-    If,
-    IfLet,
-    Parameter,
-    Apply,
-    InfixL,
-    InfixR,
-}
-
 pub struct Model<W: io::Write> {
     pub input: String,
+    pub zipper: Zipper,
     pub terminate: bool,
     pub w: W,
 }
 
 impl<W: io::Write> Model<W> {
-    pub fn run(&mut self, t: &Term) -> io::Result<()> {
+    pub fn run(&mut self) -> io::Result<()> {
         execute!(self.w, terminal::EnterAlternateScreen, cursor::Show)?;
         terminal::enable_raw_mode()?;
         loop {
@@ -56,7 +35,7 @@ impl<W: io::Write> Model<W> {
                 cursor::MoveTo(0, 0)
             )?;
             use print::*;
-            print(&mut self.w, Context { indent: 0 }, t)?;
+            print_zipper(&mut self.w, Context { indent: 0 }, &self.zipper)?;
             queue!(
                 self.w,
                 cursor::MoveTo(20, 20),
@@ -105,8 +84,18 @@ impl<W: io::Write> Model<W> {
     }
 
     fn as_command(&mut self, input: String) {
-        match input.as_str() {
-            "quit" => self.terminate = true,
+        use command::Migrate;
+        match Command::eat(&input, ()) {
+            Ok(("", command)) => match command {
+                Command::Quit => self.terminate = true,
+                Command::Migrate(migrate) => match migrate {
+                    Migrate::Up => if let Some(()) = self.zipper.up() {},
+                    Migrate::Down(i) => {
+                        if let Some(()) = self.zipper.down(i) {}
+                    }
+                },
+                _ => {}
+            },
             _ => {}
         }
     }
