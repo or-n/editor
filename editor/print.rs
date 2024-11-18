@@ -33,6 +33,47 @@ impl Context {
     }
 }
 
+fn check<A, B>(x: bool, a: Option<A>, b: Option<B>) -> bool {
+    if x {
+        b.is_some()
+    } else {
+        a.is_some()
+    }
+}
+
+fn print_infix<W: io::Write>(
+    w: &mut W,
+    context: Context,
+    a: Option<&Term>,
+    f: Option<&Term>,
+    b: Option<&Term>,
+    side: bool,
+) -> io::Result<()> {
+    let x = a.is_none();
+    if let Some(a) = a {
+        print(w, context, a)?;
+    }
+    if check(x, a, f) {
+        queue!(w, Print(' '))?;
+        if !side {
+            queue!(w, Print('.'))?;
+        }
+    }
+    if let Some(f) = f {
+        print(w, context, f)?;
+    }
+    if check(x, f, b) {
+        if side {
+            queue!(w, Print('.'))?;
+        }
+        queue!(w, Print(' '))?;
+    }
+    if let Some(b) = b {
+        print(w, context, b)?;
+    }
+    Ok(())
+}
+
 pub fn print<W>(w: &mut W, mut context: Context, term: &Term) -> io::Result<()>
 where
     W: io::Write,
@@ -48,20 +89,10 @@ where
             print(w, context, b)?;
         }
         InfixL(a, f, b) => {
-            print(w, context, a)?;
-            queue!(w, Print(' '))?;
-            queue!(w, Print('.'))?;
-            print(w, context, f)?;
-            queue!(w, Print(' '))?;
-            print(w, context, b)?;
+            print_infix(w, context, Some(a), Some(f), Some(b), false)?;
         }
         InfixR(a, f, b) => {
-            print(w, context, a)?;
-            queue!(w, Print(' '))?;
-            print(w, context, f)?;
-            queue!(w, Print('.'))?;
-            queue!(w, Print(' '))?;
-            print(w, context, b)?;
+            print_infix(w, context, Some(a), Some(f), Some(b), true)?;
         }
         Let(n, a, b) => {
             queue!(w, Print(n), Print(": "))?;
@@ -183,27 +214,16 @@ where
                 queue!(w, Print(' '))?;
             }
             InfixLF { a, .. } => {
-                print(w, context, a)?;
-                queue!(w, Print(' '))?;
-                queue!(w, Print('.'))?;
+                print_infix(w, context, Some(a), None, None, false)?;
             }
             InfixLB { a, f } => {
-                print(w, context, a)?;
-                queue!(w, Print(' '))?;
-                queue!(w, Print('.'))?;
-                print(w, context, f)?;
-                queue!(w, Print(' '))?;
+                print_infix(w, context, Some(a), Some(f), None, false)?;
             }
             InfixRF { a, .. } => {
-                print(w, context, a)?;
-                queue!(w, Print(' '))?;
+                print_infix(w, context, Some(a), None, None, true)?;
             }
             InfixRB { a, f } => {
-                print(w, context, a)?;
-                queue!(w, Print(' '))?;
-                print(w, context, f)?;
-                queue!(w, Print('.'))?;
-                queue!(w, Print(' '))?;
+                print_infix(w, context, Some(a), Some(f), None, true)?;
             }
             IfValue { .. } => {
                 queue!(w, Print("if "))?;
@@ -287,27 +307,16 @@ where
                 print(w, context, b)?;
             }
             InfixLA { f, b } => {
-                queue!(w, Print(' '))?;
-                queue!(w, Print('.'))?;
-                print(w, context, f)?;
-                queue!(w, Print(' '))?;
-                print(w, context, b)?;
+                print_infix(w, context, None, Some(f), Some(b), false)?;
             }
             InfixLF { b, .. } => {
-                queue!(w, Print(' '))?;
-                print(w, context, b)?;
+                print_infix(w, context, None, None, Some(b), false)?;
             }
             InfixRA { f, b } => {
-                queue!(w, Print(' '))?;
-                print(w, context, f)?;
-                queue!(w, Print('.'))?;
-                queue!(w, Print(' '))?;
-                print(w, context, b)?;
+                print_infix(w, context, None, Some(f), Some(b), true)?;
             }
             InfixRF { b, .. } => {
-                queue!(w, Print('.'))?;
-                queue!(w, Print(' '))?;
-                print(w, context, b)?;
+                print_infix(w, context, None, None, Some(b), true)?;
             }
             IfValue { branches } => {
                 for branch in branches {
