@@ -1,5 +1,6 @@
 use crate::util::text::*;
 
+#[derive(Clone)]
 pub enum Command {
     Fill(SyntaxItem),
     Forget,
@@ -7,9 +8,12 @@ pub enum Command {
     Quit,
 }
 
+#[derive(Clone)]
 pub enum Migrate {
     Up,
     Down(usize),
+    Left,
+    Right,
 }
 
 #[derive(Clone, Copy, Debug)]
@@ -55,6 +59,12 @@ impl Eat<(), ()> for Migrate {
                 return Err(());
             }
             return Ok((i, Migrate::Down(n as usize)));
+        }
+        if let Ok(i) = "left".drop(i) {
+            return Ok((i, Migrate::Left));
+        }
+        if let Ok(i) = "right".drop(i) {
+            return Ok((i, Migrate::Right));
         }
         Err(())
     }

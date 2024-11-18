@@ -20,7 +20,7 @@ fn main() {
     println!("{:?}\n{:?}", rest, term);
     editor::Model {
         input: String::new(),
-        terminate: false,
+        command: None,
         w: std::io::stdout(),
         zipper: Zipper::new(term.clone()),
     }

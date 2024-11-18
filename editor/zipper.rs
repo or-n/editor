@@ -89,61 +89,89 @@ pub enum Went {
 }
 
 impl Zipper {
-    pub fn up(&mut self) -> Option<()> {
+    pub fn kids(&self) -> usize {
+        use Term::*;
+        match *self.node.clone() {
+            Let(_, _, _) => 2,
+            Parameter(_) => 0,
+            Integer(_) => 0,
+            Pair(_, _) => 2,
+            Apply(_, _) => 2,
+            InfixL(_, _, _) => 3,
+            InfixR(_, _, _) => 3,
+            If(_, branches) => branches.len() + 1,
+            IfLet(_, branches, _) => branches.len() + 2,
+        }
+    }
+
+    pub fn up(&mut self) -> Option<usize> {
         let last = self.went.pop()?;
         use Went::*;
         match last {
             LetA { name, b } => {
                 let a = self.node.clone();
                 self.node = r#let(name, a, b);
+                Some(0)
             }
             LetB { name, a } => {
                 let b = self.node.clone();
                 self.node = r#let(name, a, b);
+                Some(1)
             }
             PairA { b } => {
                 let a = self.node.clone();
                 self.node = pair(a, b);
+                Some(0)
             }
             PairB { a } => {
                 let b = self.node.clone();
                 self.node = pair(a, b);
+                Some(1)
             }
             ApplyA { b } => {
                 let a = self.node.clone();
                 self.node = apply(a, b);
+                Some(0)
             }
             ApplyB { a } => {
                 let b = self.node.clone();
                 self.node = apply(a, b);
+                Some(1)
             }
             InfixLA { b, f } => {
                 let a = self.node.clone();
                 self.node = infixl(a, f, b);
+                Some(0)
             }
             InfixLF { a, b } => {
                 let f = self.node.clone();
                 self.node = infixl(a, f, b);
+                Some(1)
             }
             InfixLB { a, f } => {
                 let b = self.node.clone();
                 self.node = infixl(a, f, b);
+                Some(2)
             }
             InfixRA { b, f } => {
                 let a = self.node.clone();
                 self.node = infixr(a, f, b);
+                Some(0)
             }
             InfixRF { a, b } => {
                 let f = self.node.clone();
                 self.node = infixr(a, f, b);
+                Some(1)
             }
             InfixRB { a, f } => {
                 let b = self.node.clone();
                 self.node = infixr(a, f, b);
+                Some(2)
             }
             IfValue { branches } => {
                 let value = self.node.clone();
                 self.node = r#if(value, branches);
+                Some(0)
             }
             IfBranch {
                 value,
@@ -153,14 +181,17 @@ impl Zipper {
                 name,
             } => {
                 let block = self.node.clone();
+                let index = before.len();
                 let mut branches = before;
                 branches.push(Branch { tag, name, block });
                 branches.extend(after);
                 self.node = r#if(value, branches);
+                Some(index + 1)
             }
             IfLetValue { branches, default } => {
                 let value = self.node.clone();
                 self.node = iflet(value, branches, default);
+                Some(0)
             }
             IfLetBranch {
                 value,
@@ -171,10 +202,12 @@ impl Zipper {
                 default,
             } => {
                 let block = self.node.clone();
+                let index = before.len();
                 let mut branches = before;
                 branches.push(Branch { tag, name, block });
                 branches.extend(after);
                 self.node = iflet(value, branches, default);
+                Some(index + 2)
             }
             IfLetDefault {
                 value,
@@ -185,9 +218,9 @@ impl Zipper {
                 let block = self.node.clone();
                 let default = Branch { tag, name, block };
                 self.node = iflet(value, branches, default);
+                Some(1)
             }
         }
-        Some(())
     }
 
     pub fn down(&mut self, i: usize) -> Option<()> {

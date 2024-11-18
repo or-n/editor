@@ -4,7 +4,7 @@ pub mod zipper;
 
 use crate::util::text::Eat;
 
-use command::Command;
+use command::{Command, Migrate};
 use std::io;
 use std::time::Duration;
 use zipper::Zipper;
@@ -19,7 +19,7 @@ pub use crossterm::{
 pub struct Model<W: io::Write> {
     pub input: String,
     pub zipper: Zipper,
-    pub terminate: bool,
+    pub command: Option<Command>,
     pub w: W,
 }
 
@@ -49,8 +49,36 @@ impl<W: io::Write> Model<W> {
                     _ => {}
                 }
             }
-            if self.terminate {
-                break;
+            let command = self.command.clone();
+            self.command = None;
+            if let Some(command) = command {
+                match command {
+                    Command::Quit => break,
+                    Command::Migrate(migrate) => match migrate {
+                        Migrate::Up => if let Some(_i) = self.zipper.up() {},
+                        Migrate::Down(i) => {
+                            if let Some(()) = self.zipper.down(i) {}
+                        }
+                        Migrate::Left => {
+                            if let Some(i) = self.zipper.up() {
+                                if let None = self.zipper.down(i - 1) {
+                                    if let Some(()) =
+                                        self.zipper.down(self.zipper.kids() - 1)
+                                    {
+                                    }
+                                }
+                            }
+                        }
+                        Migrate::Right => {
+                            if let Some(i) = self.zipper.up() {
+                                if let None = self.zipper.down(i + 1) {
+                                    if let Some(()) = self.zipper.down(0) {}
+                                }
+                            }
+                        }
+                    },
+                    _ => {}
+                }
             }
         }
         execute!(self.w, terminal::LeaveAlternateScreen)?;
@@ -69,34 +97,27 @@ impl<W: io::Write> Model<W> {
             KeyCode::Enter => {
                 let input = self.input.clone();
                 self.input.clear();
-                self.as_command(input);
+                match Command::eat(&input, ()) {
+                    Ok(("", command)) => self.command = Some(command),
+                    _ => {}
+                }
             }
             _ => {}
         }
     }
 
     fn char_press(&mut self, c: char, modifiers: KeyModifiers) {
-        if modifiers.contains(KeyModifiers::CONTROL) && c == 'c' {
-            self.terminate = true;
+        if modifiers.contains(KeyModifiers::CONTROL) {
+            match c {
+                'c' => self.command = Some(Command::Quit),
+                'h' => self.command = Some(Command::Migrate(Migrate::Up)),
+                'j' => self.command = Some(Command::Migrate(Migrate::Right)),
+                'k' => self.command = Some(Command::Migrate(Migrate::Left)),
+                'l' => self.command = Some(Command::Migrate(Migrate::Down(0))),
+                _ => {}
+            }
         } else {
             self.input.push(c);
-        }
-    }
-
-    fn as_command(&mut self, input: String) {
-        use command::Migrate;
-        match Command::eat(&input, ()) {
-            Ok(("", command)) => match command {
-                Command::Quit => self.terminate = true,
-                Command::Migrate(migrate) => match migrate {
-                    Migrate::Up => if let Some(()) = self.zipper.up() {},
-                    Migrate::Down(i) => {
-                        if let Some(()) = self.zipper.down(i) {}
-                    }
-                },
-                _ => {}
-            },
-            _ => {}
         }
     }
 }

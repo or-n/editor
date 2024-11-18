@@ -222,7 +222,7 @@ where
             _ => {}
         }
     }
-    queue!(w, SetBackgroundColor(Color::DarkMagenta))?;
+    queue!(w, SetBackgroundColor(Color::Cyan))?;
     print(w, context, &*zipper.node)?;
     queue!(w, ResetColor)?;
     for went in zipper.went.iter().rev() {
