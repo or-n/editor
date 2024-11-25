@@ -1,5 +1,5 @@
 use crate::term_from_text::name;
-use crate::util::text::*;
+use eat::text::*;
 
 #[derive(Clone)]
 pub enum Command {
@@ -55,7 +55,7 @@ impl Eat<(), ()> for Migrate {
         }
         if let Ok(i) = "down".drop(i) {
             let i = ' '.drop(i)?;
-            let (i, n) = isize::eat(i, ())?;
+            let (i, n) = u32::eat(i, ())?;
             if n < 0 {
                 return Err(());
             }
@@ -73,8 +73,8 @@ impl Eat<(), ()> for Migrate {
 
 impl Eat<(), ()> for SyntaxItem {
     fn eat(i: &str, _data: ()) -> Result<(&str, Self), ()> {
-        if let Ok((i, n)) = isize::eat(i, ()) {
-            return Ok((i, SyntaxItem::I(n)));
+        if let Ok((i, n)) = u32::eat(i, ()) {
+            return Ok((i, SyntaxItem::I(n as isize)));
         }
         if let Ok(i) = '+'.drop(i) {
             return Ok((i, SyntaxItem::Add));

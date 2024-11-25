@@ -1,5 +1,5 @@
 use super::zipper::{Went, Zipper};
-use crate::term::{Branch, Integer, Term};
+use crate::term::{Branch, Term};
 
 use std::io;
 
@@ -74,7 +74,140 @@ fn print_infix<W: io::Write>(
     Ok(())
 }
 
-pub fn print<W>(w: &mut W, mut context: Context, term: &Term) -> io::Result<()>
+fn print_pair<W: io::Write>(
+    w: &mut W,
+    context: Context,
+    open: bool,
+    a: Option<&Term>,
+    b: Option<&Term>,
+    close: bool,
+) -> io::Result<()> {
+    if open {
+        queue!(w, Print('('))?;
+    }
+    if let Some(a) = a {
+        print(w, context, a)?;
+    }
+    if check(!open, a, b) {
+        queue!(w, Print(", "))?;
+    }
+    if let Some(b) = b {
+        print(w, context, b)?;
+    }
+    if close {
+        queue!(w, Print(')'))?;
+    }
+    Ok(())
+}
+
+fn print_apply<W: io::Write>(
+    w: &mut W,
+    context: Context,
+    a: Option<&Term>,
+    b: Option<&Term>,
+) -> io::Result<()> {
+    if let Some(a) = a {
+        print(w, context, a)?;
+    }
+    if check(a.is_none(), a, b) {
+        queue!(w, Print(' '))?;
+    }
+    if let Some(b) = b {
+        print(w, context, b)?;
+    }
+    Ok(())
+}
+
+fn print_let<W: io::Write>(
+    w: &mut W,
+    context: Context,
+    n: Option<&String>,
+    a: Option<&Term>,
+    b: Option<&Term>,
+) -> io::Result<()> {
+    let x = n.is_none();
+    if let Some(n) = n {
+        queue!(w, Print(n), Print(": "))?;
+    }
+    if let Some(a) = a {
+        print(w, context.not_simple(), a)?;
+    }
+    if check(x, a, b) {
+        next_line(w, context.indent)?;
+    }
+    if let Some(b) = b {
+        print(w, context, b)?;
+    }
+    Ok(())
+}
+
+fn print_if<W: io::Write>(
+    w: &mut W,
+    mut context: Context,
+    open: bool,
+    value: Option<&Term>,
+    branches: Option<&Vec<Branch>>,
+    branch: Option<(&isize, &String)>,
+) -> io::Result<()> {
+    if open {
+        if !context.simple {
+            context = context.next_indent();
+            context.simple = true;
+            next_line(w, context.indent)?;
+        }
+        queue!(w, Print("if "))?;
+    }
+    if let Some(value) = value {
+        print(w, context.not_simple(), value)?;
+    }
+    if let Some(before) = branches {
+        for branch in before {
+            print_branch(w, context.next_indent(), branch)?;
+        }
+    }
+    if let Some((tag, name)) = branch {
+        next_line(w, context.indent)?;
+        queue!(w, Print(format!("{} {}: ", tag, name)))?;
+    }
+    Ok(())
+}
+
+fn print_iflet<W: io::Write>(
+    w: &mut W,
+    mut context: Context,
+    default_open: Option<(&isize, &String)>,
+    value: Option<&Term>,
+    branches: Option<&Vec<Branch>>,
+    default_close: Option<&Term>,
+    branch: Option<(&isize, &String)>,
+) -> io::Result<()> {
+    if let Some((tag, name)) = default_open {
+        if !context.simple {
+            context = context.next_indent();
+            context.simple = true;
+            next_line(w, context.indent)?;
+        }
+        queue!(w, Print(format!("{} {}: if ", tag, name)))?;
+    }
+    if let Some(value) = value {
+        print(w, context.not_simple(), value)?;
+    }
+    if let Some(branches) = branches {
+        for branch in branches {
+            print_branch(w, context.next_indent(), branch)?;
+        }
+        next_line(w, context.indent)?;
+    }
+    if let Some((tag, name)) = branch {
+        queue!(w, Print(format!("{} {}: ", tag, name)))?;
+    }
+    if let Some(block) = default_close {
+        print(w, context, block)?;
+    }
+    Ok(())
+}
+
+pub fn print<W>(w: &mut W, context: Context, term: &Term) -> io::Result<()>
 where
     W: io::Write,
 {
@@ -83,57 +216,35 @@ where
         Parameter(n) => {
             queue!(w, Print(n))?;
         }
-        Apply(a, b) => {
-            print(w, context, a)?;
-            queue!(w, Print(' '))?;
-            print(w, context, b)?;
-        }
+        Apply(a, b) => print_apply(w, context, Some(a), Some(b))?,
         InfixL(a, f, b) => {
-            print_infix(w, context, Some(a), Some(f), Some(b), false)?;
+            print_infix(w, context, Some(a), Some(f), Some(b), false)?
         }
         InfixR(a, f, b) => {
-            print_infix(w, context, Some(a), Some(f), Some(b), true)?;
+            print_infix(w, context, Some(a), Some(f), Some(b), true)?
         }
-        Let(n, a, b) => {
-            queue!(w, Print(n), Print(": "))?;
-            print(w, context.not_simple(), a)?;
-            next_line(w, context.indent)?;
-            print(w, context, b)?;
+        Let(n, a, b) => print_let(w, context, Some(n), Some(a), Some(b))?,
+        Pair(a, b) => print_pair(w, context, true, Some(a), Some(b), true)?,
+        Integer(i) => {
+            use crate::term::Integer::*;
+            match i {
+                I(n) => queue!(w, Print(n))?,
+                Add => queue!(w, Print('+'))?,
+                Mul => queue!(w, Print('*'))?,
+            }
         }
-        Pair(a, b) => {
-            queue!(w, Print('('))?;
-            print(w, context, a)?;
-            queue!(w, Print(", "))?;
-            print(w, context, b)?;
-            queue!(w, Print(')'))?;
-        }
-        Integer(i) => print_integer(w, context, i)?,
         If(value, branches) => {
-            if !context.simple {
-                context = context.next_indent();
-                context.simple = true;
-                next_line(w, context.indent)?;
-            }
-            queue!(w, Print("if "))?;
-            print(w, context.not_simple(), value)?;
-            for branch in branches {
-                print_branch(w, context.next_indent(), branch)?;
-            }
+            print_if(w, context, true, Some(value), Some(branches), None)?
         }
-        IfLet(a, branches, default) => {
-            if !context.simple {
-                context = context.next_indent();
-                context.simple = true;
-                next_line(w, context.indent)?;
-            }
-            queue!(w, Print(format!("{} {}: if ", default.tag, default.name)))?;
-            print(w, context.not_simple(), a)?;
-            for branch in branches {
-                print_branch(w, context.next_indent(), branch)?;
-            }
-            next_line(w, context.indent)?;
-            print(w, context, &*default.block)?;
-        }
+        IfLet(value, branches, default) => print_iflet(
+            w,
+            context,
+            Some((&default.tag, &default.name)),
+            Some(value),
+            Some(branches),
+            Some(&*default.block),
+            None,
+        )?,
         Nil => queue!(w, Print("()"))?,
     }
     Ok(())
@@ -161,24 +272,6 @@ where
     Ok(())
 }
 
-fn print_integer<W>(w: &mut W, _context: Context, i: &Integer) -> io::Result<()>
-where
-    W: io::Write,
-{
-    match i {
-        Integer::I(n) => {
-            queue!(w, Print(n))?;
-        }
-        Integer::Add => {
-            queue!(w, Print('+'))?;
-        }
-        Integer::Mul => {
-            queue!(w, Print('*'))?;
-        }
-    }
-    Ok(())
-}
-
 pub fn print_zipper<W>(
     w: &mut W,
     mut context: Context,
@@ -193,40 +286,33 @@ where
         use Went::*;
         match went {
             LetA { name, .. } => {
-                queue!(w, Print(name), Print(": "))?;
+                print_let(w, context, Some(name), None, None)?;
                 context.simple = false;
             }
             LetB { name, a } => {
-                queue!(w, Print(name), Print(": "))?;
-                print(w, context.not_simple(), a)?;
-                next_line(w, context.indent)?;
+                print_let(w, context, Some(name), Some(a), None)?;
             }
             PairA { .. } => {
-                queue!(w, Print('('))?;
+                print_pair(w, context, true, None, None, false)?;
             }
             PairB { a } => {
-                queue!(w, Print('('))?;
-                print(w, context, a)?;
-                queue!(w, Print(", "))?;
+                print_pair(w, context, true, Some(a), None, false)?;
             }
-            ApplyB { a } => {
-                print(w, context, a)?;
-                queue!(w, Print(' '))?;
-            }
+            ApplyB { a } => print_apply(w, context, Some(a), None)?,
             InfixLF { a, .. } => {
-                print_infix(w, context, Some(a), None, None, false)?;
+                print_infix(w, context, Some(a), None, None, false)?
             }
             InfixLB { a, f } => {
-                print_infix(w, context, Some(a), Some(f), None, false)?;
+                print_infix(w, context, Some(a), Some(f), None, false)?
             }
             InfixRF { a, .. } => {
-                print_infix(w, context, Some(a), None, None, true)?;
+                print_infix(w, context, Some(a), None, None, true)?
             }
             InfixRB { a, f } => {
-                print_infix(w, context, Some(a), Some(f), None, true)?;
+                print_infix(w, context, Some(a), Some(f), None, true)?
             }
             IfValue { .. } => {
-                queue!(w, Print("if "))?;
+                print_if(w, context, true, None, None, None)?;
                 context.simple = false;
             }
             IfBranch {
@@ -236,17 +322,25 @@ where
                 name,
                 ..
             } => {
-                queue!(w, Print("if "))?;
-                print(w, context.not_simple(), value)?;
-                for branch in before {
-                    print_branch(w, context.next_indent(), branch)?;
-                }
-                next_line(w, context.next_indent().indent)?;
-                queue!(w, Print(format!("{} {}: ", tag, name)))?;
+                print_if(
+                    w,
+                    context,
+                    true,
+                    Some(value),
+                    Some(before),
+                    Some((tag, name)),
+                )?;
             }
             IfLetValue { default, .. } => {
-                let iflet = format!("{} {}: if ", default.tag, default.name);
-                queue!(w, Print(iflet))?;
+                print_iflet(
+                    w,
+                    context,
+                    Some((&default.tag, &default.name)),
+                    None,
+                    None,
+                    None,
+                    None,
+                )?;
                 context.simple = false;
             }
             IfLetBranch {
@@ -257,14 +351,15 @@ where
                 name,
                 ..
             } => {
-                let iflet = format!("{} {}: if ", default.tag, default.name);
-                queue!(w, Print(iflet))?;
-                print(w, context.not_simple(), value)?;
-                for branch in before {
-                    print_branch(w, context.next_indent(), branch)?;
-                }
-                next_line(w, context.next_indent().indent)?;
-                queue!(w, Print(format!("{} {}: ", tag, name)))?;
+                print_iflet(
+                    w,
+                    context,
+                    Some((&default.tag, &default.name)),
+                    Some(value),
+                    Some(before),
+                    None,
+                    Some((tag, name)),
+                )?;
             }
             IfLetDefault {
                 value,
@@ -272,13 +367,22 @@ where
                 tag,
                 name,
             } => {
-                queue!(w, Print(format!("{} {}: if ", tag, name)))?;
-                print(w, context.not_simple(), value)?;
-                for branch in branches {
-                    print_branch(w, context.next_indent(), branch)?;
-                }
+                print_iflet(
+                    w,
+                    context,
+                    Some((&tag, &name)),
+                    Some(value),
+                    Some(branches),
+                    None,
+                    None,
+                )?;
+                // queue!(w, Print(format!("{} {}: if ", tag, name)))?;
+                // print(w, context.not_simple(), value)?;
+                // for branch in branches {
+                //     print_branch(w, context.next_indent(), branch)?;
+                // }
 
-                next_line(w, context.indent)?;
+                // next_line(w, context.indent)?;
             }
             _ => {}
         }
@@ -290,22 +394,14 @@ where
     for went in zipper.went.iter().rev() {
         use Went::*;
         match went {
-            LetA { b, .. } => {
-                next_line(w, context.indent)?;
-                print(w, context, b)?;
-            }
+            LetA { b, .. } => print_let(w, context, None, None, Some(b))?,
             PairA { b } => {
-                queue!(w, Print(", "))?;
-                print(w, context, b)?;
-                queue!(w, Print(')'))?;
+                print_pair(w, context, false, None, Some(b), true)?;
             }
             PairB { .. } => {
-                queue!(w, Print(')'))?;
+                print_pair(w, context, false, None, None, true)?;
             }
-            ApplyA { b } => {
-                queue!(w, Print(' '))?;
-                print(w, context, b)?;
-            }
+            ApplyA { b } => print_apply(w, context, None, Some(b))?,
             InfixLA { f, b } => {
                 print_infix(w, context, None, Some(f), Some(b), false)?;
             }
@@ -319,14 +415,10 @@ where
                 print_infix(w, context, None, None, Some(b), true)?;
             }
             IfValue { branches } => {
-                for branch in branches {
-                    print_branch(w, context.next_indent(), branch)?;
-                }
+                print_if(w, context, false, None, Some(branches), None)?;
             }
             IfBranch { after, .. } => {
-                for branch in after {
-                    print_branch(w, context.next_indent(), branch)?;
-                }
+                print_if(w, context, false, None, Some(after), None)?;
             }
             IfLetValue { branches, default } => {
                 for branch in branches {

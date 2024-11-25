@@ -9,7 +9,7 @@ pub mod pair;
 
 use crate::term::*;
 use crate::term_from_text::{settings::*, token::Token};
-use crate::util::token::*;
+use eat::token::*;
 
 #[derive(Debug)]
 pub enum Error {

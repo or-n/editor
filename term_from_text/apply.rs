@@ -1,5 +1,5 @@
 use crate::term::*;
-use crate::util::text::*;
+use eat::text::*;
 
 use super::*;
 

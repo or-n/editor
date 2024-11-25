@@ -1,12 +1,12 @@
 mod editor;
 mod term;
 mod term_from_text;
-mod util;
+// mod util;
 
+use eat::text::EatMany;
+use eat::token::Eat;
 use term::*;
 use term_from_text::{settings::*, token::Token};
-use util::text::EatMany;
-use util::token::Eat;
 
 use editor::zipper::Zipper;
 

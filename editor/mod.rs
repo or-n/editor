@@ -3,7 +3,7 @@ pub mod print;
 pub mod zipper;
 
 use crate::term::*;
-use crate::util::text::Eat;
+use eat::text::Eat;
 
 use command::{Command, Migrate, SyntaxItem};
 use std::io;

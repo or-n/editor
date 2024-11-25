@@ -1,5 +1,5 @@
 use crate::term_from_text::name;
-use crate::util::text::*;
+use eat::text::*;
 use enum_as_inner::EnumAsInner;
 
 #[derive(Debug, Clone, PartialEq, Eq, EnumAsInner)]
@@ -26,8 +26,8 @@ impl Eat<Error, ()> for Token {
         if let Ok((text, token)) = name::Term::eat(text, ()) {
             return Ok((text, Token::Name(token.0)));
         }
-        if let Ok((text, token)) = isize::eat(text, ()) {
-            return Ok((text, Token::Integer(token)));
+        if let Ok((text, token)) = u32::eat(text, ()) {
+            return Ok((text, Token::Integer(token as isize)));
         }
         Err(Error::Invalid)
     }

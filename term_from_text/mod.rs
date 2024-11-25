@@ -8,7 +8,7 @@ pub mod settings;
 pub mod token;
 
 use crate::term::*;
-use crate::util::text::*;
+use eat::text::*;
 use settings::*;
 
 #[derive(Debug)]

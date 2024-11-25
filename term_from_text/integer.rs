@@ -1,5 +1,5 @@
 use crate::term::*;
-use crate::util::text::*;
+use eat::text::*;
 
 #[derive(Debug)]
 pub enum Error {
@@ -8,8 +8,8 @@ pub enum Error {
 
 impl Eat<Error, ()> for Integer {
     fn eat(text: &str, _data: ()) -> Result<(&str, Self), Error> {
-        if let Ok((text, n)) = isize::eat(text, ()) {
-            return Ok((text, i(n)));
+        if let Ok((text, n)) = u32::eat(text, ()) {
+            return Ok((text, i(n as isize)));
         }
         if let Ok(text) = '+'.drop(text) {
             return Ok((text, add()));

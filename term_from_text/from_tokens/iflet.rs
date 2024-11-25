@@ -1,5 +1,5 @@
 use crate::term::*;
-use crate::util::token::*;
+use eat::token::*;
 
 use crate::term_from_text::{settings::*, token::Token};
 
