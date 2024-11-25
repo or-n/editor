@@ -1,5 +1,5 @@
 use crate::term::*;
-use eat::text::*;
+use eat::*;
 
 use super::*;
 
@@ -12,7 +12,7 @@ pub enum Error {
 
 pub struct Term(pub BTerm);
 
-impl Eat<Error, ()> for Term {
+impl Eat<&str, Error, ()> for Term {
     fn eat(text: &str, _data: ()) -> Result<(&str, Self), Error> {
         use Error::*;
         let (text, a) = BTerm::eat(

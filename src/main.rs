@@ -1,10 +1,8 @@
 mod editor;
 mod term;
 mod term_from_text;
-// mod util;
 
-use eat::text::EatMany;
-use eat::token::Eat;
+use eat::*;
 use term::*;
 use term_from_text::{settings::*, token::Token};
 
@@ -16,7 +14,7 @@ fn main() {
     let source = include_str!("examples/iflet");
     let (_, tokens) = Token::eat_many(source, ());
     println!("{:?}", tokens);
-    let (rest, term) = BTerm::eat(&tokens, Settings::all(true)).unwrap();
+    let (rest, term) = BTerm::eat(&tokens[..], Settings::all(true)).unwrap();
     println!("{:?}\n{:?}", rest, term);
     editor::Model {
         input: String::new(),

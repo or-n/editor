@@ -1,27 +1,27 @@
 use crate::term::*;
-use eat::text::*;
+use eat::*;
 
 use super::*;
 
 #[derive(Debug)]
 pub enum Error {
-    L,
+    Name,
     A(TermError),
     Sep,
     B(TermError),
-    R,
+    NewLine,
 }
 
 pub struct Term(pub BTerm);
 
-impl Eat<Error, ()> for Term {
+impl Eat<&str, Error, ()> for Term {
     fn eat(text: &str, _data: ()) -> Result<(&str, Self), Error> {
         use Error::*;
-        let text = '('.drop(text).map_err(|_| L)?;
+        let (text, name) = name::Term::eat(text, ()).map_err(|_| Name)?;
+        let text = ": ".drop(text).map_err(|_| Sep)?;
         let (text, a) = BTerm::eat(text, Settings::all(true)).map_err(A)?;
-        let text = ", ".drop(text).map_err(|_| Sep)?;
+        let text = '\n'.drop(text).map_err(|_| NewLine)?;
         let (text, b) = BTerm::eat(text, Settings::all(true)).map_err(B)?;
-        let text = ')'.drop(text).map_err(|_| R)?;
-        Ok((text, Self(pair(a, b))))
+        Ok((text, Self(r#let(name.0, a, b))))
     }
 }

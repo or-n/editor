@@ -9,14 +9,14 @@ pub mod pair;
 
 use crate::term::*;
 use crate::term_from_text::{settings::*, token::Token};
-use eat::token::*;
+use eat::*;
 
 #[derive(Debug)]
 pub enum Error {
     Invalid,
 }
 
-impl Eat<Token, Error, Settings> for BTerm {
+impl Eat<&[Token], Error, Settings> for BTerm {
     fn eat(i: &[Token], data: Settings) -> Result<(&[Token], Self), Error> {
         if let Ok((i, term)) = r#if::Term::eat(i, ()) {
             return Ok((i, term.0));

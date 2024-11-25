@@ -3,7 +3,7 @@ pub mod print;
 pub mod zipper;
 
 use crate::term::*;
-use eat::text::Eat;
+use eat::*;
 
 use command::{Command, Migrate, SyntaxItem};
 use std::io;
@@ -84,7 +84,7 @@ impl Model {
             KeyCode::Enter => {
                 let input = self.input.clone();
                 self.input.clear();
-                match Command::eat(&input, ()) {
+                match Command::eat(input.as_str(), ()) {
                     Ok(("", command)) => self.command = Some(command),
                     _ => {}
                 }

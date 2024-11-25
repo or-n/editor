@@ -1,5 +1,5 @@
 use crate::term_from_text::name;
-use eat::text::*;
+use eat::*;
 
 #[derive(Clone)]
 pub enum Command {
@@ -33,7 +33,7 @@ pub enum SyntaxItem {
     Nil,
 }
 
-impl Eat<(), ()> for Command {
+impl Eat<&str, (), ()> for Command {
     fn eat(i: &str, _data: ()) -> Result<(&str, Self), ()> {
         if let Ok(i) = "quit".drop(i) {
             return Ok((i, Command::Quit));
@@ -48,7 +48,7 @@ impl Eat<(), ()> for Command {
     }
 }
 
-impl Eat<(), ()> for Migrate {
+impl Eat<&str, (), ()> for Migrate {
     fn eat(i: &str, _data: ()) -> Result<(&str, Self), ()> {
         if let Ok(i) = "up".drop(i) {
             return Ok((i, Migrate::Up));
@@ -56,9 +56,6 @@ impl Eat<(), ()> for Migrate {
         if let Ok(i) = "down".drop(i) {
             let i = ' '.drop(i)?;
             let (i, n) = u32::eat(i, ())?;
-            if n < 0 {
-                return Err(());
-            }
             return Ok((i, Migrate::Down(n as usize)));
         }
         if let Ok(i) = "left".drop(i) {
@@ -71,7 +68,7 @@ impl Eat<(), ()> for Migrate {
     }
 }
 
-impl Eat<(), ()> for SyntaxItem {
+impl Eat<&str, (), ()> for SyntaxItem {
     fn eat(i: &str, _data: ()) -> Result<(&str, Self), ()> {
         if let Ok((i, n)) = u32::eat(i, ()) {
             return Ok((i, SyntaxItem::I(n as isize)));

@@ -1,5 +1,5 @@
 use crate::term::*;
-use eat::token::*;
+use eat::*;
 
 use crate::term_from_text::{settings::*, token::Token};
 
@@ -13,7 +13,7 @@ pub enum Error {
 
 pub struct Term(pub BTerm);
 
-impl Eat<Token, Error, ()> for Term {
+impl Eat<&[Token], Error, ()> for Term {
     fn eat(i: &[Token], _data: ()) -> Result<(&[Token], Self), Error> {
         use Error::*;
         use Token::*;
@@ -38,7 +38,7 @@ pub enum BranchError {
     Newline,
 }
 
-impl Eat<Token, BranchError, ()> for Branch {
+impl Eat<&[Token], BranchError, ()> for Branch {
     fn eat(i: &[Token], _data: ()) -> Result<(&[Token], Self), BranchError> {
         use BranchError::*;
         use Token::*;
