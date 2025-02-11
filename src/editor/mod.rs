@@ -64,7 +64,6 @@ impl Model {
                     Command::Quit => break,
                     Command::Migrate(m) => migrate(&mut self.zipper, m),
                     Command::Fill(f) => fill(&mut self.zipper, f),
-                    _ => {}
                 }
             }
         }
@@ -147,35 +146,36 @@ fn fill(zipper: &mut Zipper, syntax_item: SyntaxItem) {
             zipper.node = r#if(
                 nil(),
                 vec![
-                    Branch {
-                        tag: 0,
-                        name: "a".to_string(),
-                        block: nil(),
-                    },
-                    Branch {
-                        tag: 1,
-                        name: "b".to_string(),
-                        block: nil(),
-                    },
+                    // Branch {
+                    //     tag: 0,
+                    //     name: "a".to_string(),
+                    //     block: nil(),
+                    // },
+                    // Branch {
+                    //     tag: 1,
+                    //     name: "b".to_string(),
+                    //     block: nil(),
+                    // },
                 ],
             )
         }
         IfLet => {
             zipper.node = iflet(
                 nil(),
-                vec![Branch {
-                    tag: 1,
-                    name: "b".to_string(),
-                    block: nil(),
-                }],
-                Branch {
-                    tag: 0,
-                    name: "a".to_string(),
-                    block: nil(),
-                },
+                // vec![Branch {
+                //     tag: 1,
+                //     name: "b".to_string(),
+                //     block: nil(),
+                // }],
+                vec![],
+                branch(0, "a".to_string(), nil()),
             )
         }
         Nil => zipper.node = nil(),
+        Apply => {
+            let current = zipper.node.clone();
+            zipper.node = apply(current, nil());
+        }
         _ => {}
     }
 }

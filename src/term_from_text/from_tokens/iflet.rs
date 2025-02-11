@@ -34,6 +34,11 @@ impl Eat<&[Token], Error, ()> for Term {
         let i = Whitespace('\n', 1).drop(i).map_err(|_| Newline)?;
         let (i, b) = Branch::eat_many(i, ());
         let (i, block) = BTerm::eat(i, Settings::all(true)).map_err(Block)?;
-        Ok((i, Self(iflet(a, b, Branch { tag, name, block }))))
+        // Ok((i, Self(iflet(a, b, Branch { tag, name, block }))))
+        let branches = b
+            .into_iter()
+            .map(|x| branch(x.tag, x.name, x.block))
+            .collect();
+        Ok((i, Self(iflet(a, branches, branch(tag, name, block)))))
     }
 }

@@ -233,18 +233,21 @@ where
                 Mul => queue!(w, Print('*'))?,
             }
         }
-        If(value, branches) => {
-            print_if(w, context, true, Some(value), Some(branches), None)?
-        }
-        IfLet(value, branches, default) => print_iflet(
-            w,
-            context,
-            Some((&default.tag, &default.name)),
-            Some(value),
-            Some(branches),
-            Some(&*default.block),
-            None,
-        )?,
+        Branch(_) => todo!(),
+        // If(value, branches) => {
+        //     print_if(w, context, true, Some(value), Some(branches), None)?
+        // }
+        If(value, branches) => todo!(),
+        // IfLet(value, branches, default) => print_iflet(
+        //     w,
+        //     context,
+        //     Some((&default.tag, &default.name)),
+        //     Some(value),
+        //     Some(branches),
+        //     Some(&*default.block),
+        //     None,
+        // )?,
+        IfLet(value, branches, default) => todo!(),
         Nil => queue!(w, Print("()"))?,
     }
     Ok(())
@@ -322,25 +325,25 @@ where
                 name,
                 ..
             } => {
-                print_if(
-                    w,
-                    context,
-                    true,
-                    Some(value),
-                    Some(before),
-                    Some((tag, name)),
-                )?;
+                // print_if(
+                //     w,
+                //     context,
+                //     true,
+                //     Some(value),
+                //     Some(before),
+                //     Some((tag, name)),
+                // )?;
             }
             IfLetValue { default, .. } => {
-                print_iflet(
-                    w,
-                    context,
-                    Some((&default.tag, &default.name)),
-                    None,
-                    None,
-                    None,
-                    None,
-                )?;
+                // print_iflet(
+                //     w,
+                //     context,
+                //     Some((&default.tag, &default.name)),
+                //     None,
+                //     None,
+                //     None,
+                //     None,
+                // )?;
                 context.simple = false;
             }
             IfLetBranch {
@@ -351,15 +354,15 @@ where
                 name,
                 ..
             } => {
-                print_iflet(
-                    w,
-                    context,
-                    Some((&default.tag, &default.name)),
-                    Some(value),
-                    Some(before),
-                    None,
-                    Some((tag, name)),
-                )?;
+                // print_iflet(
+                //     w,
+                //     context,
+                //     Some((&default.tag, &default.name)),
+                //     Some(value),
+                //     Some(before),
+                //     None,
+                //     Some((tag, name)),
+                // )?;
             }
             IfLetDefault {
                 value,
@@ -367,15 +370,15 @@ where
                 tag,
                 name,
             } => {
-                print_iflet(
-                    w,
-                    context,
-                    Some((&tag, &name)),
-                    Some(value),
-                    Some(branches),
-                    None,
-                    None,
-                )?;
+                // print_iflet(
+                //     w,
+                //     context,
+                //     Some((&tag, &name)),
+                //     Some(value),
+                //     Some(branches),
+                //     None,
+                //     None,
+                // )?;
                 // queue!(w, Print(format!("{} {}: if ", tag, name)))?;
                 // print(w, context.not_simple(), value)?;
                 // for branch in branches {
@@ -418,21 +421,21 @@ where
                 print_if(w, context, false, None, Some(branches), None)?;
             }
             IfBranch { after, .. } => {
-                print_if(w, context, false, None, Some(after), None)?;
+                // print_if(w, context, false, None, Some(after), None)?;
             }
             IfLetValue { branches, default } => {
-                for branch in branches {
-                    print_branch(w, context.next_indent(), branch)?;
-                }
-                next_line(w, context.indent)?;
-                print(w, context, &*default.block)?;
+                // for branch in branches {
+                //     print_branch(w, context.next_indent(), branch)?;
+                // }
+                // next_line(w, context.indent)?;
+                // print(w, context, &*default.block)?;
             }
             IfLetBranch { after, default, .. } => {
-                for branch in after {
-                    print_branch(w, context.next_indent(), branch)?;
-                }
-                next_line(w, context.indent)?;
-                print(w, context, &*default.block)?;
+                // for branch in after {
+                //     print_branch(w, context.next_indent(), branch)?;
+                // }
+                // next_line(w, context.indent)?;
+                // print(w, context, &*default.block)?;
             }
             _ => {}
         }

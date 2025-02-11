@@ -4,7 +4,6 @@ use eat::*;
 #[derive(Clone)]
 pub enum Command {
     Fill(SyntaxItem),
-    Forget,
     Migrate(Migrate),
     Quit,
 }
@@ -78,6 +77,15 @@ impl Eat<&str, (), ()> for SyntaxItem {
         }
         if let Ok(i) = '*'.drop(i) {
             return Ok((i, SyntaxItem::Mul));
+        }
+        if let Ok(i) = "apply".drop(i) {
+            return Ok((i, SyntaxItem::Apply));
+        }
+        if let Ok(i) = "infixl".drop(i) {
+            return Ok((i, SyntaxItem::InfixL));
+        }
+        if let Ok(i) = "infixr".drop(i) {
+            return Ok((i, SyntaxItem::InfixR));
         }
         if let Ok(i) = "pair".drop(i) {
             return Ok((i, SyntaxItem::Pair));

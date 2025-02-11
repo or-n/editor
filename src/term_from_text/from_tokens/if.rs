@@ -22,7 +22,12 @@ impl Eat<&[Token], Error, ()> for Term {
         let (i, a) = BTerm::eat(i, Settings::all(true)).map_err(A)?;
         let i = Whitespace('\n', 1).drop(i).map_err(|_| Newline)?;
         let (i, b) = Branch::eat_many(i, ());
-        Ok((i, Self(r#if(a, b))))
+        let branches = b
+            .into_iter()
+            .map(|x| branch(x.tag, x.name, x.block))
+            .collect();
+        // Ok((i, Self(r#if(a, b))))
+        Ok((i, Self(r#if(a, branches))))
     }
 }
 

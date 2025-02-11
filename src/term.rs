@@ -14,8 +14,9 @@ pub enum Term {
     Apply(BTerm, BTerm),
     InfixL(BTerm, BTerm, BTerm),
     InfixR(BTerm, BTerm, BTerm),
-    If(BTerm, Vec<Branch>),
-    IfLet(BTerm, Vec<Branch>, Branch),
+    Branch(Branch),
+    If(BTerm, Vec<BTerm>),
+    IfLet(BTerm, Vec<BTerm>, BTerm),
     Nil,
 }
 
@@ -57,11 +58,15 @@ pub fn infixl(a: BTerm, f: BTerm, b: BTerm) -> BTerm {
     Box::new(Term::InfixL(a, f, b))
 }
 
-pub fn r#if(a: BTerm, b: Vec<Branch>) -> BTerm {
+pub fn branch(tag: isize, name: Name, block: BTerm) -> BTerm {
+    Box::new(Term::Branch(Branch { tag, name, block }))
+}
+
+pub fn r#if(a: BTerm, b: Vec<BTerm>) -> BTerm {
     Box::new(Term::If(a, b))
 }
 
-pub fn iflet(a: BTerm, b: Vec<Branch>, c: Branch) -> BTerm {
+pub fn iflet(a: BTerm, b: Vec<BTerm>, c: BTerm) -> BTerm {
     Box::new(Term::IfLet(a, b, c))
 }
 
@@ -118,9 +123,14 @@ impl Term {
             InfixL(a, f, b) | InfixR(a, f, b) => {
                 apply(f, pair(a, b)).run(context)
             }
-            If(a, branches) => {
+            Branch(_) => todo!(),
+            If(a, b) => {
                 let a = *a.run(context);
                 let mut try_run_branch = || {
+                    // let branches: Option<Vec<super::Branch>> =
+                    //     b.into_iter().map(|x| x.as_branch()).collect();
+                    // let branches = branches?;
+                    let branches: Vec<super::Branch> = todo!();
                     let (tag, value) = a.as_pair()?;
                     let tag_i = tag.as_integer()?.as_i()?;
                     let branch = branches.iter().find(|x| x.tag == *tag_i)?;
@@ -133,7 +143,7 @@ impl Term {
                         .run(context),
                     )
                 };
-                try_run_branch().unwrap_or_else(|| r#if(Box::new(a), branches))
+                try_run_branch().unwrap_or_else(|| r#if(Box::new(a), b))
             }
             IfLet(a, mut branches, default_branch) => {
                 branches.push(default_branch);

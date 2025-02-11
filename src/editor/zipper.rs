@@ -63,26 +63,26 @@ pub enum Went {
     },
     IfBranch {
         value: BTerm,
-        before: Vec<Branch>,
-        after: Vec<Branch>,
+        before: Vec<BTerm>,
+        after: Vec<BTerm>,
         tag: isize,
         name: Name,
     },
     IfLetValue {
-        branches: Vec<Branch>,
-        default: Branch,
+        branches: Vec<BTerm>,
+        default: BTerm,
     },
     IfLetBranch {
         value: BTerm,
-        before: Vec<Branch>,
-        after: Vec<Branch>,
-        default: Branch,
+        before: Vec<BTerm>,
+        after: Vec<BTerm>,
+        default: BTerm,
         tag: isize,
         name: Name,
     },
     IfLetDefault {
         value: BTerm,
-        branches: Vec<Branch>,
+        branches: Vec<BTerm>,
         tag: isize,
         name: Name,
     },
@@ -99,6 +99,7 @@ impl Zipper {
             Apply(_, _) => 2,
             InfixL(_, _, _) => 3,
             InfixR(_, _, _) => 3,
+            Branch(_) => todo!(),
             If(_, branches) => branches.len() + 1,
             IfLet(_, branches, _) => branches.len() + 2,
             Nil => 0,
@@ -171,7 +172,7 @@ impl Zipper {
             }
             IfValue { branches } => {
                 let value = self.node.clone();
-                self.node = r#if(value, branches);
+                // self.node = r#if(value, branches);
                 Some(0)
             }
             IfBranch {
@@ -184,7 +185,7 @@ impl Zipper {
                 let block = self.node.clone();
                 let index = before.len();
                 let mut branches = before;
-                branches.push(Branch { tag, name, block });
+                // branches.push(Branch { tag, name, block });
                 branches.extend(after);
                 self.node = r#if(value, branches);
                 Some(index + 1)
@@ -205,7 +206,7 @@ impl Zipper {
                 let block = self.node.clone();
                 let index = before.len();
                 let mut branches = before;
-                branches.push(Branch { tag, name, block });
+                // branches.push(Branch { tag, name, block });
                 branches.extend(after);
                 self.node = iflet(value, branches, default);
                 Some(index + 2)
@@ -218,7 +219,7 @@ impl Zipper {
             } => {
                 let block = self.node.clone();
                 let default = Branch { tag, name, block };
-                self.node = iflet(value, branches, default);
+                // self.node = iflet(value, branches, default);
                 Some(0)
             }
         }
@@ -304,23 +305,24 @@ impl Zipper {
                 }
                 _ => None,
             },
+            Branch(_) => todo!(),
             If(value, branches) => match i {
                 0 => {
-                    self.went.push(Went::IfValue { branches });
-                    self.node = value;
+                    // self.went.push(Went::IfValue { branches });
+                    // self.node = value;
                     Some(())
                 }
                 _ => {
-                    let index = i - 1;
-                    let branch = branches.get(index)?.clone();
-                    self.went.push(Went::IfBranch {
-                        value,
-                        before: branches[..index].to_vec(),
-                        after: branches[index + 1..].to_vec(),
-                        tag: branch.tag,
-                        name: branch.name,
-                    });
-                    self.node = branch.block;
+                    // let index = i - 1;
+                    // let branch = branches.get(index)?.clone();
+                    // self.went.push(Went::IfBranch {
+                    //     value,
+                    //     before: branches[..index].to_vec(),
+                    //     after: branches[index + 1..].to_vec(),
+                    //     tag: branch.tag,
+                    //     name: branch.name,
+                    // });
+                    // self.node = branch.block;
                     Some(())
                 }
             },
@@ -331,27 +333,27 @@ impl Zipper {
                     Some(())
                 }
                 0 => {
-                    self.went.push(Went::IfLetDefault {
-                        value,
-                        branches,
-                        tag: default.tag,
-                        name: default.name,
-                    });
-                    self.node = default.block;
+                    // self.went.push(Went::IfLetDefault {
+                    //     value,
+                    //     branches,
+                    //     tag: default.tag,
+                    //     name: default.name,
+                    // });
+                    // self.node = default.block;
                     Some(())
                 }
                 _ => {
-                    let index = i - 2;
-                    let branch = branches.get(index)?.clone();
-                    self.went.push(Went::IfLetBranch {
-                        value,
-                        before: branches[..index].to_vec(),
-                        after: branches[index + 1..].to_vec(),
-                        tag: branch.tag,
-                        name: branch.name,
-                        default,
-                    });
-                    self.node = branch.block;
+                    // let index = i - 2;
+                    // let branch = branches.get(index)?.clone();
+                    // self.went.push(Went::IfLetBranch {
+                    //     value,
+                    //     before: branches[..index].to_vec(),
+                    //     after: branches[index + 1..].to_vec(),
+                    //     tag: branch.tag,
+                    //     name: branch.name,
+                    //     default,
+                    // });
+                    // self.node = branch.block;
                     Some(())
                 }
             },
