@@ -1,4 +1,5 @@
 use crate::term::*;
+use crate::term_new::*;
 use std::collections::HashMap;
 
 #[derive(Debug)]
