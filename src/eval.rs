@@ -12,7 +12,7 @@ pub enum Error {
     CallWrong,
 }
 
-type Ctx = HashMap<String, T>;
+pub type Ctx = HashMap<String, T>;
 
 pub fn eval(ctx: &mut Ctx, t: T) -> Result<T, Error> {
     use T::*;

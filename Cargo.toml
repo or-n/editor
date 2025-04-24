@@ -6,3 +6,4 @@ edition = "2021"
 [dependencies]
 enum-as-inner = "0.6.1"
 eat = { git = "https://github.com/or-n/rust-minimalist-utils.git" }
+crossterm = "0.29.0"
