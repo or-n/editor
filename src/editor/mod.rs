@@ -1,15 +1,16 @@
 pub mod command;
+pub mod print_term;
 
+use crate::term::*;
 use eat::*;
 
 use command::{Command, Migrate};
 use std::io;
 use std::time::Duration;
 
-use crossterm::event::KeyEventKind;
 pub use crossterm::{
     cursor,
-    event::{self, Event, KeyCode, KeyEvent, KeyModifiers},
+    event::{self, Event, KeyCode, KeyEvent, KeyEventKind, KeyModifiers},
     execute, queue,
     style::{Print, ResetColor},
     terminal,
@@ -20,6 +21,7 @@ pub struct Model {
     pub output: String,
     pub mode: Mode,
     pub command: Option<Command>,
+    pub term: T,
 }
 
 #[derive(Clone, PartialEq)]
@@ -41,7 +43,9 @@ impl Model {
                 cursor::MoveTo(0, size.1 - 1),
                 Print("Output: "),
                 Print(&self.output),
+                cursor::MoveTo(0, 1),
             )?;
+            print_term::term(w, &self.term)?;
             if self.mode == Mode::Command {
                 queue!(
                     w,
@@ -97,16 +101,20 @@ impl Model {
         if modifiers.contains(KeyModifiers::CONTROL) {
             match c {
                 'c' => self.command = Some(Command::Quit),
-                'h' => self.command = Some(Command::Migrate(Migrate::Up)),
-                'j' => self.command = Some(Command::Migrate(Migrate::Right)),
-                'k' => self.command = Some(Command::Migrate(Migrate::Left)),
-                'l' => self.command = Some(Command::Migrate(Migrate::Down(0))),
                 _ => {}
             }
         } else {
-            match c {
-                ':' => self.command = Some(Command::Mode(Mode::Command)),
-                _ => self.input.push(c),
+            if self.mode == Mode::Migrate {
+                match c {
+                    ':' => self.command = Some(Command::Mode(Mode::Command)),
+                    'h' => self.command = Some(Command::Migrate(Migrate::Up)),
+                    'j' => self.command = Some(Command::Migrate(Migrate::Right)),
+                    'k' => self.command = Some(Command::Migrate(Migrate::Left)),
+                    'l' => self.command = Some(Command::Migrate(Migrate::Down(0))),
+                    _ => {}
+                }
+            } else {
+                self.input.push(c)
             }
         }
     }

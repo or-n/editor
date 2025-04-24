@@ -14,6 +14,7 @@ fn main() {
         output: "".to_string(),
         mode: editor::Mode::Migrate,
         command: None,
+        term: t,
     };
     let r = m.run(&mut stdout);
     println!("{:?}", r);
