@@ -5,7 +5,7 @@ pub enum T {
     Let(Box<T>, Box<T>),
     I(i64),
     Pair(Box<T>, Box<T>),
-    Array(Vec<T>), // cannot be if, since only output is same, not input
+    If(Vec<T>),
 }
 
 pub fn r#abstract(a: String, b: T) -> T {
@@ -14,6 +14,10 @@ pub fn r#abstract(a: String, b: T) -> T {
 
 pub fn r#let(a: T, b: T) -> T {
     T::Let(Box::new(a), Box::new(b))
+}
+
+pub fn i(x: i64) -> T {
+    T::I(x)
 }
 
 pub fn pair(a: T, b: T) -> T {

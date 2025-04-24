@@ -1,25 +1,34 @@
 use crate::term::*;
 use std::collections::HashMap;
 
-pub fn eval(ctx: &mut HashMap<String, T>, t: T) -> Result<T, ()> {
+#[derive(Debug)]
+pub enum Error {
+    Id(String),
+    CallIfValuePair,
+    CallIfValuePairFirstI,
+    CallIfBranchMissing,
+    CallIfBranchPair,
+    CallWrong,
+}
+
+pub fn eval(ctx: &mut HashMap<String, T>, t: T) -> Result<T, Error> {
     use T::*;
     match t {
-        Id(x) => ctx.get(&x).map(|x| x.clone()).ok_or(()),
+        Id(x) => ctx.get(&x).map(|x| x.clone()).ok_or(Error::Id(x.clone())),
         Abstract(a, b) => Ok(Abstract(a, b)),
-        Let(a, b) => {
-            let a_ = eval(ctx, *a)?;
-            let b_ = eval(ctx, *b)?;
-            match b_ {
+        Let(value, cont) => {
+            let cont_ = eval(ctx, *cont)?;
+            match cont_ {
                 Abstract(x, cont) => {
-                    ctx.insert(x, a_);
+                    ctx.insert(x, *value);
                     eval(ctx, *cont)
                 }
-                Array(xs) => {
-                    let Pair(tag, value) = a_ else {
-                        return Err(());
+                If(xs) => {
+                    let Pair(tag, value_) = *value else {
+                        return Err(Error::CallIfValuePair);
                     };
                     let I(tag_) = *tag else {
-                        return Err(());
+                        return Err(Error::CallIfValuePairFirstI);
                     };
                     let Some(branch) = xs.into_iter().find(|x| {
                         let Pair(tag2, _) = x else {
@@ -30,14 +39,14 @@ pub fn eval(ctx: &mut HashMap<String, T>, t: T) -> Result<T, ()> {
                         };
                         tag_ == tag2_
                     }) else {
-                        return Err(());
+                        return Err(Error::CallIfBranchMissing);
                     };
                     let Pair(_, cont) = branch else {
-                        return Err(());
+                        return Err(Error::CallIfBranchPair);
                     };
-                    eval(ctx, Let(value, cont))
+                    eval(ctx, Let(value_, cont))
                 }
-                _ => Err(()),
+                _ => Err(Error::CallWrong),
             }
         }
         I(x) => Ok(I(x)),
@@ -46,12 +55,10 @@ pub fn eval(ctx: &mut HashMap<String, T>, t: T) -> Result<T, ()> {
             let b_ = eval(ctx, *b)?;
             Ok(pair(a_, b_))
         }
-        Array(xs) => {
-            let ys = xs.into_iter().map(|x| eval(ctx, x));
-            let Ok(ys) = ys.collect() else {
-                return Err(());
-            };
-            Ok(Array(ys))
+        If(xs) => {
+            let iter = xs.into_iter().map(|x| eval(ctx, x));
+            let xs_: Result<_, _> = iter.collect();
+            Ok(If(xs_?))
         }
     }
 }
