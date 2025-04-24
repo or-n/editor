@@ -11,6 +11,8 @@ fn main() {
     let mut stdout = std::io::stdout();
     let mut m = editor::Model {
         input: "".to_string(),
+        output: "".to_string(),
+        mode: editor::Mode::Migrate,
         command: None,
     };
     let r = m.run(&mut stdout);

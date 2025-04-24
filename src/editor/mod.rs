@@ -17,7 +17,15 @@ pub use crossterm::{
 
 pub struct Model {
     pub input: String,
+    pub output: String,
+    pub mode: Mode,
     pub command: Option<Command>,
+}
+
+#[derive(Clone, PartialEq)]
+pub enum Mode {
+    Migrate,
+    Command,
 }
 
 impl Model {
@@ -25,18 +33,23 @@ impl Model {
         execute!(w, terminal::EnterAlternateScreen, cursor::Show)?;
         terminal::enable_raw_mode()?;
         loop {
+            let size = terminal::size()?;
             queue!(
                 w,
                 ResetColor,
                 terminal::Clear(terminal::ClearType::All),
-                cursor::MoveTo(0, 0)
+                cursor::MoveTo(0, size.1 - 1),
+                Print("Output: "),
+                Print(&self.output),
             )?;
-            queue!(
-                w,
-                cursor::MoveTo(20, 20),
-                Print("Command: "),
-                Print(&self.input)
-            )?;
+            if self.mode == Mode::Command {
+                queue!(
+                    w,
+                    cursor::MoveTo(0, 0),
+                    Print("Command: "),
+                    Print(&self.input),
+                )?;
+            }
             w.flush()?;
             if event::poll(Duration::from_millis(100))? {
                 match event::read()? {
@@ -49,6 +62,7 @@ impl Model {
             if let Some(command) = command {
                 match command {
                     Command::Quit => break,
+                    Command::Mode(m) => self.mode = m,
                     Command::Migrate(m) => {}
                 }
             }
@@ -63,6 +77,7 @@ impl Model {
         }
         match event.code {
             KeyCode::Char(c) => self.char_press(c, event.modifiers),
+            KeyCode::Esc => self.command = Some(Command::Mode(Mode::Migrate)),
             KeyCode::Backspace => {
                 let _ = self.input.pop();
             }
@@ -71,7 +86,7 @@ impl Model {
                 self.input.clear();
                 match Command::eat(input.as_str(), ()) {
                     Ok(("", command)) => self.command = Some(command),
-                    _ => {}
+                    _ => self.output = input,
                 }
             }
             _ => {}
@@ -89,7 +104,10 @@ impl Model {
                 _ => {}
             }
         } else {
-            self.input.push(c);
+            match c {
+                ':' => self.command = Some(Command::Mode(Mode::Command)),
+                _ => self.input.push(c),
+            }
         }
     }
 }

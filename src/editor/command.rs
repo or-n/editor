@@ -3,6 +3,7 @@ use eat::*;
 #[derive(Clone)]
 pub enum Command {
     Migrate(Migrate),
+    Mode(super::Mode),
     Quit,
 }
 
