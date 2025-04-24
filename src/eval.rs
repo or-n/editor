@@ -11,7 +11,9 @@ pub enum Error {
     CallWrong,
 }
 
-pub fn eval(ctx: &mut HashMap<String, T>, t: T) -> Result<T, Error> {
+type Ctx = HashMap<String, T>;
+
+pub fn eval(ctx: &mut Ctx, t: T) -> Result<T, Error> {
     use T::*;
     match t {
         Id(x) => ctx.get(&x).map(|x| x.clone()).ok_or(Error::Id(x.clone())),

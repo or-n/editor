@@ -8,6 +8,10 @@ pub enum T {
     If(Vec<T>),
 }
 
+pub fn id(x: String) -> T {
+    T::Id(x)
+}
+
 pub fn r#abstract(a: String, b: T) -> T {
     T::Abstract(a, Box::new(b))
 }
