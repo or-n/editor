@@ -1,28 +1,20 @@
-mod editor;
+mod eat_term;
+mod eval;
 mod term;
-mod term_from_text;
-
-use eat::*;
-use term::*;
-use term_from_text::{settings::*, token::Token};
-
-use editor::zipper::Zipper;
-
+mod util;
 use std::collections::HashMap;
+use std::io;
 
 fn main() {
-    let source = include_str!("examples/iflet");
-    let (_, tokens) = Token::eat_many(source, ());
-    println!("{:?}", tokens);
-    let (rest, term) = BTerm::eat(&tokens[..], Settings::all(true)).unwrap();
-    println!("{:?}\n{:?}", rest, term);
-    editor::Model {
-        input: String::new(),
-        command: None,
-        zipper: Zipper::new(term.clone()),
-    }
-    .run(&mut std::io::stdout())
-    .unwrap();
-    let mut context = HashMap::new();
-    println!("{:?}", term.clone().run(&mut context));
+    let mut input = String::new();
+    io::stdin().read_line(&mut input).unwrap();
+
+    let data = eat_term::EatData { parens: false };
+    let r = eat_term::eat(input.as_str(), data);
+    println!("{:?}", r);
+    let Ok((_, t)) = r else {
+        return;
+    };
+    let mut ctx = HashMap::new();
+    println!("{:?}", eval::eval(&mut ctx, t));
 }
