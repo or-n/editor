@@ -1,7 +1,7 @@
 pub mod command;
 pub mod print_term;
+pub mod zip_term;
 
-use crate::term::*;
 use eat::*;
 
 use command::{Command, Migrate};
@@ -21,7 +21,7 @@ pub struct Model {
     pub output: String,
     pub mode: Mode,
     pub command: Option<Command>,
-    pub term: T,
+    pub zip: zip_term::Zip,
 }
 
 #[derive(Clone, PartialEq)]
@@ -45,7 +45,7 @@ impl Model {
                 Print(&self.output),
                 cursor::MoveTo(0, 1),
             )?;
-            print_term::term(w, &self.term)?;
+            print_term::term(w, &self.zip.term)?;
             if self.mode == Mode::Command {
                 queue!(
                     w,
@@ -67,7 +67,7 @@ impl Model {
                 match command {
                     Command::Quit => break,
                     Command::Mode(m) => self.mode = m,
-                    Command::Migrate(m) => {}
+                    Command::Migrate(m) => self.migrate(m),
                 }
             }
         }
@@ -107,14 +107,39 @@ impl Model {
             if self.mode == Mode::Migrate {
                 match c {
                     ':' => self.command = Some(Command::Mode(Mode::Command)),
-                    'h' => self.command = Some(Command::Migrate(Migrate::Up)),
-                    'j' => self.command = Some(Command::Migrate(Migrate::Right)),
-                    'k' => self.command = Some(Command::Migrate(Migrate::Left)),
-                    'l' => self.command = Some(Command::Migrate(Migrate::Down(0))),
+                    'h' => self.command = Some(Command::Migrate(Migrate::Left)),
+                    'j' => self.command = Some(Command::Migrate(Migrate::Down)),
+                    'k' => self.command = Some(Command::Migrate(Migrate::Up)),
+                    'l' => self.command = Some(Command::Migrate(Migrate::Right)),
                     _ => {}
                 }
             } else {
                 self.input.push(c)
+            }
+        }
+    }
+
+    fn migrate(&mut self, m: Migrate) {
+        match m {
+            Migrate::Up => {
+                if !self.zip.up() {
+                    self.output = "cannot go up".to_string();
+                }
+            }
+            Migrate::Down => {
+                if !self.zip.down() {
+                    self.output = "cannot go down".to_string();
+                }
+            }
+            Migrate::Left => {
+                if !self.zip.left() {
+                    self.output = "cannot go left".to_string();
+                }
+            }
+            Migrate::Right => {
+                if !self.zip.right() {
+                    self.output = "cannot go right".to_string();
+                }
             }
         }
     }

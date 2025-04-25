@@ -5,8 +5,13 @@ pub use crossterm::{cursor, queue, style::Print};
 
 pub fn term(w: &mut impl io::Write, x: &T) -> io::Result<()> {
     match x {
-        T::Id(id) => queue!(w, Print(id), cursor::MoveTo(0, 0))?,
-        T::Abstract(id, _cont) => queue!(w, Print(id))?,
+        T::Id(id) => queue!(w, Print(id))?,
+        T::Abstract(id, cont) => {
+            queue!(w, Print("("))?;
+            queue!(w, Print(id), Print(": "))?;
+            term(w, cont)?;
+            queue!(w, Print(")"))?;
+        }
         T::Let(value, cont) => {
             term(w, value)?;
             queue!(w, Print(" "))?;

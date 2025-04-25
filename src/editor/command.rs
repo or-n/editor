@@ -10,7 +10,7 @@ pub enum Command {
 #[derive(Clone)]
 pub enum Migrate {
     Up,
-    Down(usize),
+    Down,
     Left,
     Right,
 }
@@ -43,9 +43,10 @@ impl Eat<&str, (), ()> for Migrate {
             return Ok((i, Migrate::Up));
         }
         if let Ok(i) = "down".drop(i) {
-            let i = ' '.drop(i)?;
-            let (i, n) = u32::eat(i, ())?;
-            return Ok((i, Migrate::Down(n as usize)));
+            // let i = ' '.drop(i)?;
+            // let (i, n) = u32::eat(i, ())?;
+            // return Ok((i, Migrate::Down(n as usize)));
+            return Ok((i, Migrate::Down));
         }
         if let Ok(i) = "left".drop(i) {
             return Ok((i, Migrate::Left));
