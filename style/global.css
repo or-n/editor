@@ -1,0 +1,7 @@
+.overlay-type-extern {
+  display: none !important;
+}
+
+img:hover {
+  outline: none !important;
+}
