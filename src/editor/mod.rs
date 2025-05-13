@@ -45,14 +45,11 @@ impl Model {
                 Print(&self.output),
                 cursor::MoveTo(0, 1),
             )?;
-            print_term::term(w, &self.zip.term)?;
+            queue!(w, cursor::MoveTo(20, 20))?;
+            print_term::zip(w, &self.zip)?;
+            queue!(w, cursor::MoveTo(0, 0))?;
             if self.mode == Mode::Command {
-                queue!(
-                    w,
-                    cursor::MoveTo(0, 0),
-                    Print("Command: "),
-                    Print(&self.input),
-                )?;
+                queue!(w, Print("Command: "), Print(&self.input),)?;
             }
             w.flush()?;
             if event::poll(Duration::from_millis(100))? {
